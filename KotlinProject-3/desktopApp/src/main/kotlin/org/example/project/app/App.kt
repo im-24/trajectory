@@ -22,7 +22,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import java.lang.Math.toRadians
 import kotlinx.coroutines.delay
 
 @Composable
@@ -355,7 +354,7 @@ fun App() {
                 )
             }
 
-            // preview trajectory (dotted line)
+            // preview trajectory test commit (dotted line)
             var tprev = 0f
             var currentprev: Offset? = null
             val angPrevRad = Math.toRadians(angleanm.toDouble())
