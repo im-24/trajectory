@@ -11,7 +11,7 @@ object Appthemes {
         dark = Color(0x080808),
     )
     val Dark = AppColors(
-        background = Color(0xff80808),
+        background = Color(0xFF080808),
         primary = Color(0xffB73DE1),
         secondary = Color(0xff7ACA23),
         dark = Color(0xffE4E8E9),

@@ -21,7 +21,7 @@ fun main() = application {
     val stateApp = rememberWindowState(
         position = WindowPosition.Aligned(Alignment.TopStart),
         placement =
-            WindowPlacement.Fullscreen ,
+            WindowPlacement.Maximized ,
     )
 
 
