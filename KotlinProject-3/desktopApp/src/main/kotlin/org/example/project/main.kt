@@ -31,8 +31,8 @@ fun main() = application {
         state = stateApp,
         resizable = true,
         alwaysOnTop = false,
-        undecorated = false,
-        transparent = false,
+        undecorated = true,
+        transparent = true,
         ) {
 
         App(stateApp)

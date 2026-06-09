@@ -9,7 +9,7 @@ import androidx.compose.runtime.setValue
 
 class ThemeController {
 
-    var currentTheme by mutableStateOf(Appthemes.Dark)
+    var currentTheme by mutableStateOf(Appthemes.Light)
 
     fun toggleTheme() {
 
