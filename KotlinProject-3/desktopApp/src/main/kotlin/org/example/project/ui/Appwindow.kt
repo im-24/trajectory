@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -20,6 +21,8 @@ import org.example.project.ui.them.AppColors
 import org.example.project.ui.them.ThemeController
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.MaterialTheme
+import androidx.compose.ui.Alignment
 
 
 @Composable
@@ -33,6 +36,7 @@ fun TopBarMenu(
             .background(colors.background)
             .fillMaxWidth()
             .height(40.dp),
+        verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ){
         Text("Trajectory")
@@ -48,9 +52,11 @@ fun TopBarMenu(
                 modifier = Modifier.width(56.dp)
                     .fillMaxHeight(),
                 colors = ButtonDefaults.buttonColors(
-                    backgroundColor = colors.background,
-
+                    backgroundColor = colors.background
                 )
+                ,shape = RoundedCornerShape(0.dp)
+
+
             )
             {
                 Text("_")
@@ -63,7 +69,8 @@ fun TopBarMenu(
                     backgroundColor = colors.background,
                 ),
                 modifier = Modifier.width(56.dp)
-                    .fillMaxHeight()
+                    .fillMaxHeight(),
+                shape = RoundedCornerShape(0.dp)
 
             ){
 
