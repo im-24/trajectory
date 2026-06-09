@@ -1,5 +1,6 @@
 
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowPosition
@@ -11,30 +12,16 @@ import java.awt.Toolkit
 
 
 fun main() = application {
-
-    val screenSize = Toolkit.getDefaultToolkit().screenSize
-
-    val screenWidth = screenSize.width
-    val screenHeight = screenSize.height
-
-
-    val stateApp = rememberWindowState(
-        position = WindowPosition.Aligned(Alignment.TopStart),
-        placement =
-            WindowPlacement.Maximized ,
+    val windowState = rememberWindowState(
+        placement = WindowPlacement.Maximized,
     )
-
 
     Window(
         onCloseRequest = ::exitApplication,
         title = "Trajectory",
-        state = stateApp,
-        resizable = true,
-        alwaysOnTop = false,
-        undecorated = true,
-        transparent = true,
-        ) {
-
-        App(stateApp)
+        state = windowState,
+        undecorated = false
+    ) {
+        App()
     }
 }
