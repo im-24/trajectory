@@ -1,11 +1,12 @@
-// Home.kt - At the top, remove any ambiguous imports
-package org.example.project
+// ui/screens/HomeContent.kt
+package ui.screens
 
 import HomeViewModel
 import TrajectoryColors
-import androidx.compose.animation.*
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.*
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -13,7 +14,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,396 +27,40 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import data.models.EnvironmentData
-import data.models.ProjectileData
-import ui.screens.*
-
-// ... rest of your code
-// ── Tab definitions ────────────────────────────────────────────
-enum class AppTab(val label: String) {
-    HOME        ("Home"),
-    PROJECTILE  ("Projectile info"),
-    SIM_2D      ("2D Simulation"),
-    SIM_3D      ("3D Simulation"),
-    DATA        ("Data"),
-    EXPORT      ("Export")
-}
-
-// ── Sidebar items (per tab — extend later) ─────────────────────
-data class SidebarItem(val label: String, val icon: ImageVector)
-
-fun sidebarItemsFor(tab: AppTab): List<SidebarItem> = when (tab) {
-    AppTab.HOME       -> listOf(
-        SidebarItem("Overview",   Icons.Default.Dashboard),
-        SidebarItem("Notes",      Icons.Default.EditNote),
-        SidebarItem("History",    Icons.Default.History)
-    )
-    AppTab.PROJECTILE -> listOf(
-        SidebarItem("Parameters", Icons.Default.Tune),
-        SidebarItem("Materials",  Icons.Default.Layers),
-        SidebarItem("Presets",    Icons.Default.BookmarkBorder)
-    )
-    AppTab.SIM_2D     -> listOf(
-        SidebarItem("Controls",   Icons.Default.PlayArrow),
-        SidebarItem("Overlay",    Icons.Default.Layers),
-        SidebarItem("Markers",    Icons.Default.Place)
-    )
-    AppTab.SIM_3D     -> listOf(
-        SidebarItem("Camera",     Icons.Default.Videocam),
-        SidebarItem("Controls",   Icons.Default.PlayArrow),
-        SidebarItem("Environment",Icons.Default.Public)
-    )
-    AppTab.DATA       -> listOf(
-        SidebarItem("Filter",     Icons.Default.FilterList),
-        SidebarItem("Sort",       Icons.Default.Sort),
-        SidebarItem("Columns",    Icons.Default.ViewColumn)
-    )
-    AppTab.EXPORT     -> listOf(
-        SidebarItem("Format",     Icons.Default.Description),
-        SidebarItem("Range",      Icons.Default.DateRange),
-        SidebarItem("Options",    Icons.Default.Settings)
-    )
-}
-
-// ── Main home/workspace composable ────────────────────────────
-@Composable
-fun HomeScreen(projectConfig: NewProjectConfig) {
-    var selectedTab by remember { mutableStateOf(AppTab.HOME) }
-    var sidebarExpanded by remember { mutableStateOf(false) }
-
-    // Create shared ViewModel for projectile and environment data
-    val homeViewModel = remember { HomeViewModel() }
-
-    Column(modifier = Modifier.fillMaxSize()) {
-
-        // ── Top Tab Bar ──────────────────────────────────────
-        TopTabBar(
-            selectedTab = selectedTab,
-            projectName = projectConfig.name,
-            onTabSelected = { selectedTab = it }
-        )
-
-        // ── Body: sidebar + main area ────────────────────────
-        Row(modifier = Modifier.fillMaxSize()) {
-
-            // Sidebar
-            CollapsibleSidebar(
-                expanded   = sidebarExpanded,
-                onExpand   = { sidebarExpanded = true },
-                onCollapse = { sidebarExpanded = false },
-                items      = sidebarItemsFor(selectedTab)
-            )
-
-            // Main content area - pass the ViewModel data
-            MainContentArea(
-                tab = selectedTab,
-                homeViewModel= homeViewModel,
-
-                )
-        }
-    }
-}
-
-// ── Top Tab Bar ────────────────────────────────────────────────
-@Composable
-fun TopTabBar(
-    selectedTab: AppTab,
-    projectName: String,
-    onTabSelected: (AppTab) -> Unit
-) {
-    Surface(
-        color     = Color.White,
-        shadowElevation = 1.dp,
-        modifier  = Modifier.fillMaxWidth()
-    ) {
-        Column {
-
-            // Project name strip
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(TrajectoryColors.Purple)
-                    .padding(horizontal = 20.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = projectName,
-                    fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.Bold,
-                    fontSize   = 13.sp,
-                    color      = Color.White
-                )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.FiberManualRecord,
-                        contentDescription = "Saved",
-                        tint   = TrajectoryColors.LimeGreen,
-                        modifier = Modifier.size(8.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text("Saved", fontSize = 11.sp, color = Color.White.copy(alpha = 0.7f))
-                }
-            }
-            Row(
-                modifier = Modifier
-                    .padding(horizontal = 8.dp)
-                    .fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ){
-
-                    Text(
-                        text = selectedTab.label,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TrajectoryColors.Purple,
-                        fontFamily = FontFamily.Monospace
-                    )
-
-
-                // Tabs row
-                Row(
-                    modifier = Modifier
-                        .padding(horizontal = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    AppTab.entries.forEach { tab ->
-                        TabItem(
-                            tab      = tab,
-                            selected = tab == selectedTab,
-                            onClick  = { onTabSelected(tab) }
-                        )
-                    }
-                }
-
-            }
-        }
-    }
-}
 
 @Composable
-fun TabItem(tab: AppTab, selected: Boolean, onClick: () -> Unit) {
-    val contentColor = if (selected) TrajectoryColors.Purple else TrajectoryColors.TextSecondary
+fun HomeContent() {
+    val viewModel = remember { HomeViewModel() }
 
-    Column(
+    LazyColumn(
         modifier = Modifier
-            .clickable(onClick = onClick)
-            .padding(horizontal = 4.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .fillMaxSize()
+            .background(TrajectoryColors.Background)
+            .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-
-            Spacer(Modifier.width(6.dp))
-            Text(
-                text      = tab.label,
-                fontSize  = 13.sp,
-                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                color     = contentColor
-            )
-        }
-        // Active indicator bar
-        Box(
-            modifier = Modifier
-                .height(2.dp)
-                .width(if (selected) 60.dp else 0.dp)
-                .background(
-                    color = if (selected) TrajectoryColors.Purple else Color.Transparent,
-                    shape = RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp)
-                )
-        )
-    }
-}
-
-// ── Collapsible Sidebar ────────────────────────────────────────
-@Composable
-fun CollapsibleSidebar(
-    expanded:   Boolean,
-    onExpand:   () -> Unit,
-    onCollapse: () -> Unit,
-    items:      List<SidebarItem>
-) {
-    // Hover detection strip — always visible, triggers expand
-    Row(modifier = Modifier.fillMaxHeight()) {
-
-        // Thin hover-sensitive strip when collapsed
-        if (!expanded) {
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(6.dp)
-                    .background(TrajectoryColors.Purple.copy(alpha = 0.15f))
-                    .pointerInput(Unit) {
-                        awaitPointerEventScope {
-                            while (true) {
-                                val event = awaitPointerEvent()
-                                if (event.changes.any { it.pressed.not() }) {
-                                    onExpand()
-                                }
-                            }
-                        }
-                    }
-                    .clickable { onExpand() }   // fallback click
-            )
+        // Section 1: Projectile Overview & Characteristics
+        item {
+            ProjectileOverviewSection(viewModel)
         }
 
-        // Animated sidebar panel
-        AnimatedVisibility(
-            visible = expanded,
-            enter   = slideInHorizontally(
-                initialOffsetX = { -it },
-                animationSpec  = tween(200)
-            ) + fadeIn(tween(150)),
-            exit    = slideOutHorizontally(
-                targetOffsetX = { -it },
-                animationSpec = tween(180)
-            ) + fadeOut(tween(120))
-        ) {
-            Surface(
-                modifier        = Modifier
-                    .fillMaxHeight()
-                    .width(220.dp)
-                    .pointerInput(Unit) {
-                        // collapse when pointer leaves the sidebar
-                        awaitPointerEventScope {
-                            while (true) {
-                                val event = awaitPointerEvent()
-                                val inBounds = event.changes.any { change ->
-                                    change.position.x in 0f..size.width.toFloat() &&
-                                            change.position.y in 0f..size.height.toFloat()
-                                }
-                                if (!inBounds) onCollapse()
-                            }
-                        }
-                    },
-                color           = Color.White,
-                shadowElevation = 4.dp
-            ) {
-                Column(modifier = Modifier.fillMaxSize().padding(vertical = 12.dp)) {
+        // Section 2: Environment Parameters
+        item {
+            EnvironmentParametersSection(viewModel)
+        }
 
-                    // Header
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment     = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            "Options",
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize   = 13.sp,
-                            color      = TrajectoryColors.TextPrimary
-                        )
-                        IconButton(
-                            onClick  = onCollapse,
-                            modifier = Modifier.size(28.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.ChevronLeft,
-                                contentDescription = "Hide sidebar",
-                                tint = TrajectoryColors.TextMuted,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    }
-
-                    HorizontalDivider(
-                        color    = TrajectoryColors.Divider,
-                        modifier = Modifier.padding(horizontal = 12.dp)
-                    )
-
-                    Spacer(Modifier.height(8.dp))
-
-                    // Sidebar items
-                    items.forEach { item ->
-                        SidebarRow(item = item)
-                    }
-                }
-            }
+        // Section 3: Mathematical Expressions (placeholder)
+        item {
+            MathematicalExpressionsSection()
         }
     }
 }
 
-@Composable
-fun SidebarRow(item: SidebarItem) {
-    var hovered by remember { mutableStateOf(false) }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { /* will wire to actions later */ }
-            .background(
-                if (hovered) TrajectoryColors.Purple.copy(alpha = 0.06f)
-                else Color.Transparent
-            )
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector      = item.icon,
-            contentDescription = item.label,
-            tint             = TrajectoryColors.Purple,
-            modifier         = Modifier.size(18.dp)
-        )
-        Spacer(Modifier.width(10.dp))
-        Text(item.label, fontSize = 13.sp, color = TrajectoryColors.TextPrimary)
-    }
-}
-// Helper function to convert RGB Ints to Color
-fun projectileColor(projectile: ProjectileData): Color {
-    return Color(
-        red = projectile.colorRed / 255f,
-        green = projectile.colorGreen / 255f,
-        blue = projectile.colorBlue / 255f
-    )
-}
-// ── Main Content Area (FIXED) ──────────────────────────────────────────
-@Composable
-fun MainContentArea(
-    tab: AppTab,
-    homeViewModel: HomeViewModel,
-) {
-    when (tab) {
-        AppTab.HOME -> {
-            HomeContent()
-        }
-        AppTab.PROJECTILE -> {
-            ProjectileCharacteristicsScreen(homeViewModel.projectile)
-        }
-        AppTab.SIM_2D -> {
-            TwoDSimulationScreen(
-                projectileData = homeViewModel.projectile,
-                environmentData = homeViewModel.environment
-            )
-        }
-        AppTab.SIM_3D -> {
-            ThreeDSimulationScreen(homeViewModel)
-        }
-        AppTab.DATA -> {
-            DataScreen()
-        }
-        AppTab.EXPORT -> {
-            ExportScreen()
-        }
-    }
-}
-// ── Projectile Overview Section ─────────────────────────────────────────
 @Composable
 fun ProjectileOverviewSection(viewModel: HomeViewModel) {
     Card(
@@ -480,7 +129,7 @@ fun ProjectileOverviewSection(viewModel: HomeViewModel) {
                             .background(
                                 Brush.radialGradient(
                                     colors = listOf(
-                                        projectileColor(viewModel.projectile).copy(alpha = 0.3f),
+                                        Color(viewModel.projectile.colorRed, viewModel.projectile.colorGreen, viewModel.projectile.colorBlue, 0.3.toInt()),
                                         TrajectoryColors.Background
                                     ),
                                     center = Offset(150f, 150f),
@@ -502,8 +151,8 @@ fun ProjectileOverviewSection(viewModel: HomeViewModel) {
                                     .background(
                                         Brush.radialGradient(
                                             colors = listOf(
-                                                projectileColor(viewModel.projectile).copy(alpha = 0.3f),
-                                                TrajectoryColors.Background
+                                                Color(viewModel.projectile.colorRed, viewModel.projectile.colorGreen, viewModel.projectile.colorBlue),
+                                                Color(viewModel.projectile.colorRed, viewModel.projectile.colorGreen, viewModel.projectile.colorBlue).copy(alpha = 0.6f)
                                             ),
                                             radius = 80f
                                         )
@@ -512,7 +161,7 @@ fun ProjectileOverviewSection(viewModel: HomeViewModel) {
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = " ",
+                                    text = "🎯",
                                     fontSize = 48.sp
                                 )
                             }
@@ -542,7 +191,6 @@ fun ProjectileOverviewSection(viewModel: HomeViewModel) {
                             label = "Mass",
                             value = viewModel.projectile.mass,
                             unit = "kg",
-                            icon = Icons.Default.FitnessCenter,
                             onValueChange = viewModel::updateProjectileMass,
                             valueRange = 0.01..1000.0,
                             format = "%.2f"
@@ -553,12 +201,19 @@ fun ProjectileOverviewSection(viewModel: HomeViewModel) {
                             label = "Radius",
                             value = viewModel.projectile.radius,
                             unit = "m",
-                            icon = Icons.Default.RadioButtonUnchecked,
                             onValueChange = viewModel::updateProjectileRadius,
                             valueRange = 0.001..1.0,
                             format = "%.3f"
                         )
 
+                        ParameterRow(
+                            label = "Mass",
+                            value = viewModel.projectile.mass,
+                            unit = "kg",
+                            onValueChange = viewModel::updateProjectileMass,
+                            valueRange = 0.01..1000.0,
+                            format = "%.2f"
+                        )
                         // Read-only derived properties
                         DerivedPropertyRow(
                             label = "Diameter",
@@ -603,7 +258,6 @@ fun ProjectileOverviewSection(viewModel: HomeViewModel) {
     }
 }
 
-// ── Environment Parameters Section ──────────────────────────────────────
 @Composable
 fun EnvironmentParametersSection(viewModel: HomeViewModel) {
     Card(
@@ -671,7 +325,6 @@ fun EnvironmentParametersSection(viewModel: HomeViewModel) {
                             label = "Gravity",
                             value = viewModel.environment.gravity,
                             unit = "m/s²",
-                            icon = Icons.Default.Download,
                             onValueChange = viewModel::updateGravity,
                             valueRange = 0.0..30.0,
                             format = "%.2f",
@@ -682,7 +335,6 @@ fun EnvironmentParametersSection(viewModel: HomeViewModel) {
                             label = "Air Density",
                             value = viewModel.environment.airDensity,
                             unit = "kg/m³",
-                            icon = Icons.Default.Air,
                             onValueChange = viewModel::updateAirDensity,
                             valueRange = 0.0..2.0,
                             format = "%.3f",
@@ -699,7 +351,6 @@ fun EnvironmentParametersSection(viewModel: HomeViewModel) {
                             label = "Wind Speed",
                             value = viewModel.environment.windSpeed,
                             unit = "m/s",
-                            icon = Icons.Default.Speed,
                             onValueChange = viewModel::updateWindSpeed,
                             valueRange = 0.0..50.0,
                             format = "%.1f",
@@ -710,7 +361,6 @@ fun EnvironmentParametersSection(viewModel: HomeViewModel) {
                             label = "Wind Direction",
                             value = viewModel.environment.windDirection,
                             unit = "°",
-                            icon = Icons.Default.Explore,
                             onValueChange = viewModel::updateWindDirection,
                             valueRange = 0.0..360.0,
                             format = "%.0f",
@@ -727,7 +377,6 @@ fun EnvironmentParametersSection(viewModel: HomeViewModel) {
                             label = "Temperature",
                             value = viewModel.environment.temperature,
                             unit = "°C",
-                            icon = Icons.Default.Thermostat,
                             onValueChange = viewModel::updateTemperature,
                             valueRange = -50.0..100.0,
                             format = "%.1f",
@@ -738,7 +387,6 @@ fun EnvironmentParametersSection(viewModel: HomeViewModel) {
                             label = "Pressure",
                             value = viewModel.environment.pressure,
                             unit = "Pa",
-                            icon = Icons.Default.Speed,
                             onValueChange = viewModel::updatePressure,
                             valueRange = 50000.0..150000.0,
                             format = "%.0f",
@@ -828,7 +476,6 @@ fun EnvironmentParametersSection(viewModel: HomeViewModel) {
     }
 }
 
-// ── Mathematical Expressions Section (Placeholder) ──────────────────────
 @Composable
 fun MathematicalExpressionsSection() {
     Card(
@@ -916,13 +563,11 @@ fun MathematicalExpressionsSection() {
     }
 }
 
-// ── Helper Components ───────────────────────────────────────────────────
 @Composable
 fun ParameterRow(
     label: String,
     value: Double,
     unit: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
     onValueChange: (Double) -> Unit,
     valueRange: ClosedFloatingPointRange<Double>,
     format: String = "%.2f",
@@ -943,9 +588,7 @@ fun ParameterRow(
                     if (it in valueRange) onValueChange(it)
                 }
             },
-            leadingIcon = {
-                Icon(icon, contentDescription = null, tint = TrajectoryColors.Purple)
-            },
+
             trailingIcon = {
                 Text(
                     text = unit,

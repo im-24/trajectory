@@ -1,10 +1,10 @@
 package org.example.project
 
+import ProjectManager
 import RecentProject
 import StartPage
 import TrajectoryTheme
 import androidx.compose.runtime.*
-import org.expample.projcet.viewmodel.HomeViewModel.HomeScreen
 import ui.screens.NewProjectConfig
 import ui.screens.NewProjectDialog
 
@@ -29,7 +29,8 @@ fun App() {
                 StartPage(
                     recentProjects = sampleProjects,
                     onNewProject   = { showNewProjectDialog = true },
-                    onOpenProject  = { /* TODO: file picker */ },
+                    onOpenProject  = {         val projectManager = ProjectManager()
+                    },
                     onOpenRecent   = { project ->
                         currentScreen = Screen.Workspace(
                             NewProjectConfig(

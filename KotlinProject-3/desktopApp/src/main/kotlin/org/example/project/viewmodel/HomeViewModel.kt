@@ -2,7 +2,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
-import ui.screens.ProjectileData
+
+import data.models.EnvironmentData
+import data.models.ProjectileData
+import kotlin.Int
 import kotlin.math.PI
 
 
@@ -39,7 +42,10 @@ class HomeViewModel {
     }
 
     fun updateProjectileColor(color: Color) {
-        projectile = projectile.copy(color = color)
+
+        projectile = projectile.copy(      colorRed= 123,
+         colorGreen = 94,
+         colorBlue = 167)
     }
 
     // Update environment properties

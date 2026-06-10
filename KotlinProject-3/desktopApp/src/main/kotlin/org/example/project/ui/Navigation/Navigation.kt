@@ -3,7 +3,7 @@ package ui.Navigation
 import RecentProject
 import StartPage
 import androidx.compose.runtime.*
-import org.expample.projcet.viewmodel.HomeViewModel.HomeScreen
+import org.example.project.HomeScreen
 import ui.screens.*
 
 sealed class Screen {
