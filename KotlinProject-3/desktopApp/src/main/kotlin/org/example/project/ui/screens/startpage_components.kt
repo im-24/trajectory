@@ -1,3 +1,6 @@
+package org.example.project
+
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,40 +15,49 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.example.project.ui.screens.RecentProject
 
 @Composable
 fun StartPageTopBar(searchQuery: String, onSearchChange: (String) -> Unit) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 12.dp),
+        modifier = Modifier.padding(4.dp)
+            .fillMaxWidth(),
         horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        OutlinedTextField(
+        TextField(
+
             value = searchQuery,
             onValueChange = onSearchChange,
-            placeholder = { Text("Find Project ...", color = TrajectoryColors.TextMuted) },
+            placeholder = { Text("Find Project ...",
+                color = _root_ide_package_.org.example.project.ui.them.TrajectoryColors.Background ,
+                )},
+            textStyle = MaterialTheme.typography.labelLarge,
+
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Search,
                     contentDescription = null,
-                    tint = TrajectoryColors.TextMuted
+                    tint = _root_ide_package_.org.example.project.ui.them.TrajectoryColors.Background
                 )
             },
-            modifier = Modifier.width(260.dp).height(44.dp),
+            modifier = Modifier.padding(
+                start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp
+            ).background(Color.Transparent),
+            shape = CircleShape,
+
             singleLine = true,
-            shape = MaterialTheme.shapes.medium,
             colors = OutlinedTextFieldDefaults.colors(
                 unfocusedBorderColor = Color.Transparent,
-                focusedBorderColor = TrajectoryColors.Purple,
-                unfocusedContainerColor = Color.White.copy(alpha = 0.6f),
-                focusedContainerColor = Color.White
-            )
+                focusedBorderColor = _root_ide_package_.org.example.project.ui.them.TrajectoryColors.Background,
+                unfocusedContainerColor = Color.Gray.copy(alpha = 0.25f),
+                focusedContainerColor = Color.Gray.copy(alpha = 0.5f),
+            ),
         )
 
         Spacer(Modifier.width(12.dp))
@@ -54,7 +66,7 @@ fun StartPageTopBar(searchQuery: String, onSearchChange: (String) -> Unit) {
             Icon(
                 imageVector = Icons.Default.Settings,
                 contentDescription = "Settings",
-                tint = TrajectoryColors.TextSecondary
+                tint = _root_ide_package_.org.example.project.ui.them.TrajectoryColors.TextSecondary
             )
         }
 
@@ -63,7 +75,7 @@ fun StartPageTopBar(searchQuery: String, onSearchChange: (String) -> Unit) {
         Box(
             modifier = Modifier
                 .size(36.dp)
-                .background(TrajectoryColors.TextMuted, shape = CircleShape)
+                .background(_root_ide_package_.org.example.project.ui.them.TrajectoryColors.TextMuted, shape = CircleShape)
         )
     }
 }
@@ -75,19 +87,19 @@ fun RecentProjectsTable(
 ) {
     Column {
         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-            Text("Name",   modifier = Modifier.weight(2f), color = TrajectoryColors.TextSecondary, fontSize = 13.sp)
-            Text("Recent", modifier = Modifier.weight(2f), color = TrajectoryColors.TextSecondary, fontSize = 13.sp)
-            Text("Path",   modifier = Modifier.weight(3f), color = TrajectoryColors.TextSecondary, fontSize = 13.sp)
-            Text("Size",   modifier = Modifier.weight(1f), color = TrajectoryColors.TextSecondary, fontSize = 13.sp,
+            Text("Name",   modifier = Modifier.weight(2f), color = _root_ide_package_.org.example.project.ui.them.TrajectoryColors.TextSecondary, fontSize = 13.sp)
+            Text("Recent", modifier = Modifier.weight(2f), color = _root_ide_package_.org.example.project.ui.them.TrajectoryColors.TextSecondary, fontSize = 13.sp)
+            Text("Path",   modifier = Modifier.weight(3f), color = _root_ide_package_.org.example.project.ui.them.TrajectoryColors.TextSecondary, fontSize = 13.sp)
+            Text("Size",   modifier = Modifier.weight(1f), color = _root_ide_package_.org.example.project.ui.them.TrajectoryColors.TextSecondary, fontSize = 13.sp,
                 textAlign = TextAlign.End)
         }
 
-        HorizontalDivider(color = TrajectoryColors.Divider)
+        HorizontalDivider(color = _root_ide_package_.org.example.project.ui.them.TrajectoryColors.Divider)
 
         LazyColumn {
             items(projects) { project ->
                 ProjectRow(project = project, onClick = { onOpen(project) })
-                HorizontalDivider(color = TrajectoryColors.Divider.copy(alpha = 0.5f))
+                HorizontalDivider(color = _root_ide_package_.org.example.project.ui.them.TrajectoryColors.Divider.copy(alpha = 0.5f))
             }
         }
     }
@@ -103,10 +115,10 @@ fun ProjectRow(project: RecentProject, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(project.name,       modifier = Modifier.weight(2f), fontSize = 13.sp)
-        Text(project.lastOpened, modifier = Modifier.weight(2f), fontSize = 13.sp, color = TrajectoryColors.TextSecondary)
-        Text(project.path,       modifier = Modifier.weight(3f), fontSize = 13.sp, color = TrajectoryColors.TextSecondary,
+        Text(project.lastOpened, modifier = Modifier.weight(2f), fontSize = 13.sp, color = _root_ide_package_.org.example.project.ui.them.TrajectoryColors.TextSecondary)
+        Text(project.path,       modifier = Modifier.weight(3f), fontSize = 13.sp, color = _root_ide_package_.org.example.project.ui.them.TrajectoryColors.TextSecondary,
             maxLines = 1, overflow = TextOverflow.Ellipsis)
         Text("${project.sizeMB} MB", modifier = Modifier.weight(1f), fontSize = 13.sp,
-            textAlign = TextAlign.End, color = TrajectoryColors.TextSecondary)
+            textAlign = TextAlign.End, color = _root_ide_package_.org.example.project.ui.them.TrajectoryColors.TextSecondary)
     }
 }

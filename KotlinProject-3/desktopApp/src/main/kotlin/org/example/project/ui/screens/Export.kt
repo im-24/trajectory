@@ -1,7 +1,7 @@
 // ui/screens/Export.kt
 package ui.screens
 
-import TrajectoryColors
+import org.example.project.ui.them.TrajectoryColors
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import data.DataManager
 import data.models.*
+import org.example.project.LocalAppSettings
 import services.ReportGenerator
 import java.io.File
 import java.text.SimpleDateFormat
@@ -33,7 +34,8 @@ import kotlin.Double
 
 @Composable
 fun ExportScreen() {
-    val dataManager = remember { DataManager() }
+    val settings      = LocalAppSettings.current          // ← live settings
+    val dataManager   = remember { DataManager() }
     val reportGenerator = remember { ReportGenerator() }
     var trajectories by remember { mutableStateOf<List<TrajectoryResult>>(emptyList()) }
     var selectedTrajectoryId by remember { mutableStateOf<String?>(null) }
@@ -500,9 +502,31 @@ fun ExportScreen() {
                                     val filePath = File(reportLocation, fileName).absolutePath
 
                                     val reportData = ReportData(
-                                        title = "Trajectory Simulation Report",
-                                        date = java.util.Date(),
-                                        programInfo = ProgramInfo(),
+                                        title = "${settings.projectName} — Trajectory Simulation Report",
+                                        date  = java.util.Date(),
+                                        programInfo = ProgramInfo(
+                                            name        = "Trajectory Pro",
+                                            version     = "1.0.0",
+                                            description = buildString {
+                                                if (settings.reportCompany.isNotBlank())
+                                                    append("${settings.reportCompany} · ")
+                                                if (settings.reportDepartment.isNotBlank())
+                                                    append("${settings.reportDepartment} · ")
+                                                append("Advanced projectile motion simulation software.")
+                                            },
+                                            features = listOf(
+                                                if (settings.reportAuthorName.isNotBlank())
+                                                    "Analyst: ${settings.reportAuthorName}" else null,
+                                                if (settings.reportContact.isNotBlank())
+                                                    "Contact: ${settings.reportContact}" else null,
+                                                "Realistic physics simulation with air drag",
+                                                "2D and 3D trajectory visualization",
+                                                "Environmental condition modeling",
+                                                "Data export and reporting",
+                                                if (settings.reportFootnote.isNotBlank())
+                                                    settings.reportFootnote else null
+                                            ).filterNotNull()
+                                        ),
                                         projectileParameters = ProjectileReportData(
                                             name = selectedTrajectory!!.projectileData.name,
                                             mass = selectedTrajectory!!.projectileData.mass,
@@ -526,7 +550,7 @@ fun ExportScreen() {
                                             launchAngle = selectedTrajectory!!.launchElevation,
                                             launchAzimuth= 0.0, // Add this
 
-                                        initialHeight = selectedTrajectory!!.initialHeight,
+                                            initialHeight = selectedTrajectory!!.initialHeight,
                                             maxDistance = selectedTrajectory!!.maxDistance,
                                             maxHeight = selectedTrajectory!!.maxHeight,
                                             timeOfFlight = selectedTrajectory!!.timeOfFlight,

@@ -1,7 +1,7 @@
 package ui.Navigation
 
-import RecentProject
-import StartPage
+import org.example.project.ui.screens.RecentProject
+import org.example.project.ui.screens.StartPage
 import androidx.compose.runtime.*
 import org.example.project.HomeScreen
 import ui.screens.*

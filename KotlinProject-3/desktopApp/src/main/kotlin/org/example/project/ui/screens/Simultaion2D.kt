@@ -1,11 +1,12 @@
-// ui/screens/Simulation2D.kt - Fixed layout crash, improved chart, better defaults
+// ui/screens/Simulation2D.kt
 package ui.screens
 
-import TrajectoryColors
+import org.example.project.ui.them.TrajectoryColors
 import androidx.compose.animation.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -37,6 +38,20 @@ import kotlinx.coroutines.launch
 import physics.TrajectoryCalculator
 import kotlin.math.*
 
+/** The three orthogonal planes available for the 2D view. */
+enum class ViewPlane(val label: String, val xLabel: String, val yLabel: String) {
+    XY("XY (Side)", "Distance X (m)", "Height Y (m)"),
+    XZ("XZ (Top)", "Distance X (m)", "Lateral Z (m)"),
+    YZ("YZ (Front)", "Height Y (m)", "Lateral Z (m)")
+}
+
+/** Extracts the (horizontal, vertical) values for a point given a plane. */
+private fun TrajectoryPoint.componentsFor(plane: ViewPlane): Pair<Double, Double> = when (plane) {
+    ViewPlane.XY -> x to y
+    ViewPlane.XZ -> x to z
+    ViewPlane.YZ -> y to z
+}
+
 @Composable
 fun TwoDSimulationScreen(
     projectileData: ProjectileData,
@@ -51,14 +66,19 @@ fun TwoDSimulationScreen(
     var currentTimeIndex by remember { mutableStateOf(0) }
     var animationJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
 
-    // Better defaults for realistic simulation
+    // Defaults for realistic simulation
     var initialVelocity by remember { mutableStateOf(100.0) }
     var launchAngle by remember { mutableStateOf(45.0) }
+    var launchAzimuth by remember { mutableStateOf(0.0) }
     var initialHeight by remember { mutableStateOf(2.0) }
 
     var showInputPanel by remember { mutableStateOf(true) }
     var currentX by remember { mutableStateOf(0.0) }
     var currentY by remember { mutableStateOf(0.0) }
+    var currentZ by remember { mutableStateOf(0.0) }
+
+    // Selected plane for the 2D chart
+    var selectedPlane by remember { mutableStateOf(ViewPlane.XY) }
 
     Column(
         modifier = Modifier
@@ -121,6 +141,15 @@ fun TwoDSimulationScreen(
                         )
 
                         ParameterCard(
+                            label = "Launch Azimuth",
+                            value = launchAzimuth,
+                            unit = "°",
+                            range = 0.0..360.0,
+                            onValueChange = { launchAzimuth = it },
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        ParameterCard(
                             label = "Initial Height",
                             value = initialHeight,
                             unit = "m",
@@ -141,6 +170,7 @@ fun TwoDSimulationScreen(
                                 environment = environmentData,
                                 initialVelocity = initialVelocity,
                                 launchElevation = launchAngle,
+                                launchAzimuth = launchAzimuth,
                                 initialHeight = initialHeight
                             )
                             currentTimeIndex = 0
@@ -149,6 +179,7 @@ fun TwoDSimulationScreen(
                                 if (result.points.isNotEmpty()) {
                                     currentX = result.points[0].x
                                     currentY = result.points[0].y
+                                    currentZ = result.points[0].z
                                 }
                             }
                         },
@@ -194,10 +225,19 @@ fun TwoDSimulationScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    // Plane selector
+                    PlaneSelector(
+                        selected = selectedPlane,
+                        onSelect = { selectedPlane = it }
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
                     SafeTrajectoryChart(
                         result = trajectoryResult!!,
                         currentPoint = if (isPlaying || currentTimeIndex > 0)
-                            trajectoryResult!!.points.getOrNull(currentTimeIndex) else null
+                            trajectoryResult!!.points.getOrNull(currentTimeIndex) else null,
+                        plane = selectedPlane
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -208,6 +248,7 @@ fun TwoDSimulationScreen(
                         totalPoints = trajectoryResult!!.points.size,
                         currentX = currentX,
                         currentY = currentY,
+                        currentZ = currentZ,
                         onPlayPause = {
                             if (isPlaying) {
                                 animationJob?.cancel()
@@ -218,6 +259,7 @@ fun TwoDSimulationScreen(
                                         currentTimeIndex = i
                                         currentX = trajectoryResult!!.points[i].x
                                         currentY = trajectoryResult!!.points[i].y
+                                        currentZ = trajectoryResult!!.points[i].z
                                         delay(16)
                                     }
                                     isPlaying = false
@@ -231,6 +273,7 @@ fun TwoDSimulationScreen(
                             currentTimeIndex = 0
                             currentX = trajectoryResult!!.points[0].x
                             currentY = trajectoryResult!!.points[0].y
+                            currentZ = trajectoryResult!!.points[0].z
                         },
                         onEnd = {
                             animationJob?.cancel()
@@ -239,6 +282,7 @@ fun TwoDSimulationScreen(
                             val lastPoint = trajectoryResult!!.points.last()
                             currentX = lastPoint.x
                             currentY = lastPoint.y
+                            currentZ = lastPoint.z
                         },
                         onSliderChange = { value ->
                             animationJob?.cancel()
@@ -246,6 +290,7 @@ fun TwoDSimulationScreen(
                             currentTimeIndex = value
                             currentX = trajectoryResult!!.points[value].x
                             currentY = trajectoryResult!!.points[value].y
+                            currentZ = trajectoryResult!!.points[value].z
                         }
                     )
                 }
@@ -254,17 +299,69 @@ fun TwoDSimulationScreen(
     }
 }
 
+/** Tab-style selector for the three orthogonal view planes. */
+@Composable
+fun PlaneSelector(
+    selected: ViewPlane,
+    onSelect: (ViewPlane) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(TrajectoryColors.Background, RoundedCornerShape(8.dp))
+            .padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        ViewPlane.entries.forEach { plane ->
+            val isSelected = plane == selected
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(if (isSelected) TrajectoryColors.Purple else Color.Transparent)
+                    .clickable { onSelect(plane) }
+                    .padding(vertical = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = plane.label,
+                    fontSize = 12.sp,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                    color = if (isSelected) Color.White else TrajectoryColors.TextSecondary
+                )
+            }
+        }
+    }
+}
+
 @Composable
 fun SafeTrajectoryChart(
     result: TrajectoryResult,
-    currentPoint: TrajectoryPoint?
+    currentPoint: TrajectoryPoint?,
+    plane: ViewPlane
 ) {
     val points = result.points
-    val maxX = points.maxOfOrNull { it.x } ?: 1.0
-    val maxY = points.maxOfOrNull { it.y } ?: 1.0
 
-    val safeMaxX = if (maxX <= 0) 100.0 else maxX
-    val safeMaxY = if (maxY <= 0) 50.0 else maxY
+    // Compute bounds for the selected plane's two axes
+    val horizValues = points.map { it.componentsFor(plane).first }
+    val vertValues = points.map { it.componentsFor(plane).second }
+
+    val minH = horizValues.minOrNull() ?: 0.0
+    val maxH = horizValues.maxOrNull() ?: 1.0
+    val minV = vertValues.minOrNull() ?: 0.0
+    val maxV = vertValues.maxOrNull() ?: 1.0
+
+    // Range with safe fallback, and include 0 in range for axes that can go negative (Z, etc.)
+    val rangeH = (maxH - minH).let { if (it <= 0) 100.0 else it }
+    val rangeV = (maxV - minV).let { if (it <= 0) 50.0 else it }
+
+    val originH = min(0.0, minH)
+    val originV = min(0.0, minV)
+    val spanH = max(maxH, 0.0) - originH
+    val spanV = max(maxV, 0.0) - originV
+
+    val safeSpanH = if (spanH <= 0) 100.0 else spanH
+    val safeSpanV = if (spanV <= 0) 50.0 else spanV
 
     Column(
         modifier = Modifier
@@ -279,7 +376,7 @@ fun SafeTrajectoryChart(
         ) {
             // Y-axis title
             Text(
-                text = "Height (m)",
+                text = plane.yLabel,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
                 color = TrajectoryColors.TextPrimary,
@@ -307,13 +404,14 @@ fun SafeTrajectoryChart(
 
                     if (graphWidth > 10 && graphHeight > 10) {
                         drawSafeGridLines(graphWidth, graphHeight, padding)
-                        drawSafeAxes(graphWidth, graphHeight, padding)
+                        drawSafeAxes(graphWidth, graphHeight, padding, originH, originV, safeSpanH, safeSpanV)
 
                         if (points.isNotEmpty()) {
                             val path = Path().apply {
                                 points.forEachIndexed { index, point ->
-                                    val xPos = padding + (point.x / safeMaxX).toFloat() * graphWidth
-                                    val yPos = size.height - padding - (point.y / safeMaxY).toFloat() * graphHeight
+                                    val (h, v) = point.componentsFor(plane)
+                                    val xPos = padding + ((h - originH) / safeSpanH).toFloat() * graphWidth
+                                    val yPos = size.height - padding - ((v - originV) / safeSpanV).toFloat() * graphHeight
 
                                     val safeX = xPos.coerceIn(padding, size.width - padding)
                                     val safeY = yPos.coerceIn(padding, size.height - padding)
@@ -330,8 +428,9 @@ fun SafeTrajectoryChart(
                             )
 
                             currentPoint?.let { point ->
-                                val xPos = padding + (point.x / safeMaxX).toFloat() * graphWidth
-                                val yPos = size.height - padding - (point.y / safeMaxY).toFloat() * graphHeight
+                                val (h, v) = point.componentsFor(plane)
+                                val xPos = padding + ((h - originH) / safeSpanH).toFloat() * graphWidth
+                                val yPos = size.height - padding - ((v - originV) / safeSpanV).toFloat() * graphHeight
 
                                 val safeX = xPos.coerceIn(padding, size.width - padding)
                                 val safeY = yPos.coerceIn(padding, size.height - padding)
@@ -351,44 +450,40 @@ fun SafeTrajectoryChart(
                     }
                 }
 
-                // X-axis labels - using offset instead of negative padding
-                if (safeMaxX > 0) {
-                    Row(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .fillMaxWidth()
-                            .offset(y = 12.dp),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        for (i in 0..4) {
-                            val value = ((i / 4f) * safeMaxX).toInt()
-                            Text(
-                                text = value.toString(),
-                                fontSize = 10.sp,
-                                color = TrajectoryColors.TextSecondary
-                            )
-                        }
+                // X-axis labels
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .offset(y = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    for (i in 0..4) {
+                        val value = (originH + (i / 4f) * safeSpanH).toInt()
+                        Text(
+                            text = value.toString(),
+                            fontSize = 10.sp,
+                            color = TrajectoryColors.TextSecondary
+                        )
                     }
                 }
 
                 // Y-axis labels
-                if (safeMaxY > 0) {
-                    Column(
-                        modifier = Modifier
-                            .align(Alignment.CenterStart)
-                            .fillMaxHeight()
-                            .offset(x = (-36).dp),
-                        verticalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        for (i in 0..4) {
-                            val value = ((4 - i) / 4f * safeMaxY).toInt()
-                            Text(
-                                text = value.toString(),
-                                fontSize = 10.sp,
-                                color = TrajectoryColors.TextSecondary,
-                                modifier = Modifier.padding(vertical = 2.dp)
-                            )
-                        }
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .fillMaxHeight()
+                        .offset(x = (-36).dp),
+                    verticalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    for (i in 0..4) {
+                        val value = (originV + (4 - i) / 4f * safeSpanV).toInt()
+                        Text(
+                            text = value.toString(),
+                            fontSize = 10.sp,
+                            color = TrajectoryColors.TextSecondary,
+                            modifier = Modifier.padding(vertical = 2.dp)
+                        )
                     }
                 }
             }
@@ -396,7 +491,7 @@ fun SafeTrajectoryChart(
 
         // X-axis title
         Text(
-            text = "Distance (m)",
+            text = plane.xLabel,
             fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
             color = TrajectoryColors.TextPrimary,
@@ -440,64 +535,53 @@ private fun DrawScope.drawSafeGridLines(
     }
 }
 
+/**
+ * Draws axes, placing the origin (0,0) at its correct position within the
+ * [originH, originH+spanH] x [originV, originV+spanV] data range — important
+ * for planes like XZ/YZ where values can be negative.
+ */
 private fun DrawScope.drawSafeAxes(
     graphWidth: Float,
     graphHeight: Float,
-    padding: Float
+    padding: Float,
+    originH: Double,
+    originV: Double,
+    spanH: Double,
+    spanV: Double
 ) {
-    val startX = padding
-    val endX = size.width - padding
-    val startY = size.height - padding
-    val endY = padding
+    val left = padding
+    val right = size.width - padding
+    val bottom = size.height - padding
+    val top = padding
 
-    // X-axis
-    if (startX >= 0 && endX <= size.width && startY >= 0 && startY <= size.height) {
-        drawLine(
-            color = Color.Black,
-            start = Offset(startX, startY),
-            end = Offset(endX, startY),
-            strokeWidth = 2f
-        )
-        // Arrow
-        drawLine(
-            color = Color.Black,
-            start = Offset(endX - 12, startY - 6),
-            end = Offset(endX, startY),
-            strokeWidth = 2f
-        )
-        drawLine(
-            color = Color.Black,
-            start = Offset(endX - 12, startY + 6),
-            end = Offset(endX, startY),
-            strokeWidth = 2f
-        )
-    }
+    // Position of value 0 along each axis (clamped into view)
+    val zeroXFrac = ((0.0 - originH) / spanH).toFloat().coerceIn(0f, 1f)
+    val zeroYFrac = ((0.0 - originV) / spanV).toFloat().coerceIn(0f, 1f)
 
-    // Y-axis
-    if (padding >= 0 && padding <= size.width && startY >= 0 && endY >= 0) {
-        drawLine(
-            color = Color.Black,
-            start = Offset(padding, startY),
-            end = Offset(padding, endY),
-            strokeWidth = 2f
-        )
-        // Arrow
-        drawLine(
-            color = Color.Black,
-            start = Offset(padding - 6, endY + 12),
-            end = Offset(padding, endY),
-            strokeWidth = 2f
-        )
-        drawLine(
-            color = Color.Black,
-            start = Offset(padding + 6, endY + 12),
-            end = Offset(padding, endY),
-            strokeWidth = 2f
-        )
-    }
+    val zeroX = left + zeroXFrac * graphWidth
+    val zeroY = bottom - zeroYFrac * graphHeight
+
+    // Horizontal axis (along X direction of the plot, at y = 0 if in range)
+    drawLine(
+        color = Color.Black,
+        start = Offset(left, zeroY),
+        end = Offset(right, zeroY),
+        strokeWidth = 2f
+    )
+    drawLine(color = Color.Black, start = Offset(right - 12, zeroY - 6), end = Offset(right, zeroY), strokeWidth = 2f)
+    drawLine(color = Color.Black, start = Offset(right - 12, zeroY + 6), end = Offset(right, zeroY), strokeWidth = 2f)
+
+    // Vertical axis (at x = 0 if in range)
+    drawLine(
+        color = Color.Black,
+        start = Offset(zeroX, bottom),
+        end = Offset(zeroX, top),
+        strokeWidth = 2f
+    )
+    drawLine(color = Color.Black, start = Offset(zeroX - 6, top + 12), end = Offset(zeroX, top), strokeWidth = 2f)
+    drawLine(color = Color.Black, start = Offset(zeroX + 6, top + 12), end = Offset(zeroX, top), strokeWidth = 2f)
 }
 
-// ParameterCard, StatisticsRow, etc. remain the same (unchanged for brevity)
 @Composable
 fun ParameterCard(
     label: String,
@@ -583,6 +667,7 @@ fun AnimationControls(
     totalPoints: Int,
     currentX: Double,
     currentY: Double,
+    currentZ: Double,
     onPlayPause: () -> Unit,
     onReset: () -> Unit,
     onEnd: () -> Unit,
@@ -598,6 +683,7 @@ fun AnimationControls(
         ) {
             CoordinateDisplay("Position X", "${currentX.toInt()} m")
             CoordinateDisplay("Position Y", "${currentY.toInt()} m")
+            CoordinateDisplay("Position Z", "${currentZ.toInt()} m")
             CoordinateDisplay("Progress", "${if (totalPoints > 0) (currentTimeIndex * 100 / totalPoints) else 0}%")
         }
 
@@ -606,7 +692,7 @@ fun AnimationControls(
         Slider(
             value = currentTimeIndex.toFloat(),
             onValueChange = { onSliderChange(it.toInt()) },
-            valueRange = 0f..(totalPoints - 1).toFloat(),
+            valueRange = 0f..(totalPoints - 1).coerceAtLeast(1).toFloat(),
             modifier = Modifier.fillMaxWidth(),
             colors = SliderDefaults.colors(
                 thumbColor = TrajectoryColors.Purple,

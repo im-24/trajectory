@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import org.example.project.ui.them.TrajectoryColors
 import java.io.File
 import javax.swing.JFileChooser
 import javax.swing.filechooser.FileNameExtensionFilter
@@ -222,15 +223,15 @@ fun NewProjectDialog(
                             colors = SliderDefaults.colors(
                                 thumbColor = TrajectoryColors.Purple,
                                 activeTrackColor = TrajectoryColors.Purple,
-                                inactiveTrackColor = TrajectoryColors.Divider
+                                inactiveTrackColor = org.example.project.ui.them.TrajectoryColors.Divider
                             )
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("1 min", fontSize = 11.sp, color = TrajectoryColors.TextMuted)
-                            Text("30 min", fontSize = 11.sp, color = TrajectoryColors.TextMuted)
+                            Text("1 min", fontSize = 11.sp, color = org.example.project.ui.them.TrajectoryColors.TextMuted)
+                            Text("30 min", fontSize = 11.sp, color = org.example.project.ui.them.TrajectoryColors.TextMuted)
                         }
                     }
                 }
@@ -243,7 +244,7 @@ fun NewProjectDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("Cancel", color = TrajectoryColors.TextSecondary)
+                        Text("Cancel", color = org.example.project.ui.them.TrajectoryColors.TextSecondary)
                     }
                     Spacer(Modifier.width(8.dp))
                     Button(
@@ -261,7 +262,7 @@ fun NewProjectDialog(
                             }
                         },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = TrajectoryColors.Purple
+                            containerColor = org.example.project.ui.them.TrajectoryColors.Purple
                         ),
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.height(44.dp).widthIn(min = 120.dp)
@@ -286,15 +287,15 @@ private fun DialogLabel(text: String) {
         text = text,
         fontSize = 13.sp,
         fontWeight = FontWeight.Medium,
-        color = TrajectoryColors.TextSecondary,
+        color = org.example.project.ui.them.TrajectoryColors.TextSecondary,
         modifier = Modifier.padding(bottom = 6.dp)
     )
 }
 
 @Composable
 private fun dialogFieldColors() = OutlinedTextFieldDefaults.colors(
-    unfocusedBorderColor = TrajectoryColors.Divider,
-    focusedBorderColor   = TrajectoryColors.Purple,
+    unfocusedBorderColor = org.example.project.ui.them.TrajectoryColors.Divider,
+    focusedBorderColor   = org.example.project.ui.them.TrajectoryColors.Purple,
     unfocusedContainerColor = Color(0xFFFAFAFA),
     focusedContainerColor   = Color.White
 )

@@ -1,8 +1,8 @@
 // ui/screens/HomeContent.kt
 package ui.screens
 
-import HomeViewModel
-import TrajectoryColors
+import org.example.project.viewmodel.HomeViewModel
+import org.example.project.ui.them.TrajectoryColors
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -14,11 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,15 +23,18 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import data.models.DragModel
+import org.example.project.projectileColor
 
 @Composable
-fun HomeContent() {
-    val viewModel = remember { HomeViewModel() }
+fun HomeContent(viewModel: HomeViewModel) {
+    // DELETE: val viewModel = remember { HomeViewModel() }
 
     LazyColumn(
         modifier = Modifier
@@ -44,25 +43,18 @@ fun HomeContent() {
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        // Section 1: Projectile Overview & Characteristics
-        item {
-            ProjectileOverviewSection(viewModel)
-        }
-
-        // Section 2: Environment Parameters
-        item {
-            EnvironmentParametersSection(viewModel)
-        }
-
-        // Section 3: Mathematical Expressions (placeholder)
-        item {
-            MathematicalExpressionsSection()
-        }
+        item { ProjectileOverviewSection(viewModel) }
+        item { EnvironmentParametersSection(viewModel) }
+        item { MathematicalExpressionsSection() }
     }
 }
 
+
+
 @Composable
 fun ProjectileOverviewSection(viewModel: HomeViewModel) {
+    var advancedExpanded by remember { mutableStateOf(false) }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -108,11 +100,9 @@ fun ProjectileOverviewSection(viewModel: HomeViewModel) {
                 )
             }
 
-            // Expandable content
             if (viewModel.isProjectileExpanded) {
                 HorizontalDivider(color = TrajectoryColors.Divider)
 
-                // Two-column layout: 3D preview + parameters
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -129,7 +119,7 @@ fun ProjectileOverviewSection(viewModel: HomeViewModel) {
                             .background(
                                 Brush.radialGradient(
                                     colors = listOf(
-                                        Color(viewModel.projectile.colorRed, viewModel.projectile.colorGreen, viewModel.projectile.colorBlue, 0.3.toInt()),
+                                        projectileColor(viewModel.projectile).copy(alpha = 0.3f),
                                         TrajectoryColors.Background
                                     ),
                                     center = Offset(150f, 150f),
@@ -143,7 +133,6 @@ fun ProjectileOverviewSection(viewModel: HomeViewModel) {
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            // 3D Sphere representation
                             Box(
                                 modifier = Modifier
                                     .size(120.dp)
@@ -151,8 +140,8 @@ fun ProjectileOverviewSection(viewModel: HomeViewModel) {
                                     .background(
                                         Brush.radialGradient(
                                             colors = listOf(
-                                                Color(viewModel.projectile.colorRed, viewModel.projectile.colorGreen, viewModel.projectile.colorBlue),
-                                                Color(viewModel.projectile.colorRed, viewModel.projectile.colorGreen, viewModel.projectile.colorBlue).copy(alpha = 0.6f)
+                                                projectileColor(viewModel.projectile),
+                                                projectileColor(viewModel.projectile).copy(alpha = 0.6f)
                                             ),
                                             radius = 80f
                                         )
@@ -160,10 +149,7 @@ fun ProjectileOverviewSection(viewModel: HomeViewModel) {
                                     .shadow(8.dp, CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(
-                                    text = "🎯",
-                                    fontSize = 48.sp
-                                )
+                                Text(text = "🎯", fontSize = 48.sp)
                             }
 
                             Text(
@@ -186,34 +172,27 @@ fun ProjectileOverviewSection(viewModel: HomeViewModel) {
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        // Mass input
+                        // ── Core parameters ──
                         ParameterRow(
                             label = "Mass",
                             value = viewModel.projectile.mass,
                             unit = "kg",
+                            icon = Icons.Default.FitnessCenter,
                             onValueChange = viewModel::updateProjectileMass,
                             valueRange = 0.01..1000.0,
                             format = "%.2f"
                         )
 
-                        // Radius input
                         ParameterRow(
                             label = "Radius",
                             value = viewModel.projectile.radius,
                             unit = "m",
+                            icon = Icons.Default.RadioButtonUnchecked,
                             onValueChange = viewModel::updateProjectileRadius,
                             valueRange = 0.001..1.0,
                             format = "%.3f"
                         )
 
-                        ParameterRow(
-                            label = "Mass",
-                            value = viewModel.projectile.mass,
-                            unit = "kg",
-                            onValueChange = viewModel::updateProjectileMass,
-                            valueRange = 0.01..1000.0,
-                            format = "%.2f"
-                        )
                         // Read-only derived properties
                         DerivedPropertyRow(
                             label = "Diameter",
@@ -251,6 +230,61 @@ fun ProjectileOverviewSection(viewModel: HomeViewModel) {
                                 unfocusedBorderColor = TrajectoryColors.Divider
                             )
                         )
+
+                        // ── Advanced (optional) section ──
+                        AdvancedSectionToggle(
+                            expanded = advancedExpanded,
+                            onToggle = { advancedExpanded = !advancedExpanded },
+                            label = "Advanced Ballistics"
+                        )
+
+                        if (advancedExpanded) {
+                            // Drag model picker
+                            DragModelPicker(
+                                selected = viewModel.projectile.dragModel,
+                                onSelect = viewModel::updateProjectileDragModel
+                            )
+
+                            ParameterRow(
+                                label = "Ballistic Coefficient",
+                                value = viewModel.projectile.ballisticCoefficient,
+                                unit = "",
+                                icon = Icons.Default.Speed,
+                                onValueChange = viewModel::updateProjectileBallisticCoefficient,
+                                valueRange = 0.01..2.0,
+                                format = "%.3f"
+                            )
+
+                            ParameterRow(
+                                label = "Spin Rate",
+                                value = viewModel.projectile.spinRate,
+                                unit = "rad/s",
+                                icon = Icons.Default.Loop,
+                                onValueChange = viewModel::updateProjectileSpinRate,
+                                valueRange = 0.0..10000.0,
+                                format = "%.1f"
+                            )
+
+                            ParameterRow(
+                                label = "Spin Axis Yaw",
+                                value = viewModel.projectile.spinAxisYaw,
+                                unit = "°",
+                                icon = Icons.Default.Explore,
+                                onValueChange = viewModel::updateProjectileSpinAxisYaw,
+                                valueRange = -180.0..180.0,
+                                format = "%.1f"
+                            )
+
+                            ParameterRow(
+                                label = "Spin Axis Pitch",
+                                value = viewModel.projectile.spinAxisPitch,
+                                unit = "°",
+                                icon = Icons.Default.Explore,
+                                onValueChange = viewModel::updateProjectileSpinAxisPitch,
+                                valueRange = -90.0..90.0,
+                                format = "%.1f"
+                            )
+                        }
                     }
                 }
             }
@@ -260,6 +294,8 @@ fun ProjectileOverviewSection(viewModel: HomeViewModel) {
 
 @Composable
 fun EnvironmentParametersSection(viewModel: HomeViewModel) {
+    var advancedExpanded by remember { mutableStateOf(false) }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -305,11 +341,9 @@ fun EnvironmentParametersSection(viewModel: HomeViewModel) {
                 )
             }
 
-            // Expandable content
             if (viewModel.isEnvironmentExpanded) {
                 HorizontalDivider(color = TrajectoryColors.Divider)
 
-                // Grid layout for environment parameters
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -325,6 +359,7 @@ fun EnvironmentParametersSection(viewModel: HomeViewModel) {
                             label = "Gravity",
                             value = viewModel.environment.gravity,
                             unit = "m/s²",
+                            icon = Icons.Default.Download,
                             onValueChange = viewModel::updateGravity,
                             valueRange = 0.0..30.0,
                             format = "%.2f",
@@ -335,6 +370,7 @@ fun EnvironmentParametersSection(viewModel: HomeViewModel) {
                             label = "Air Density",
                             value = viewModel.environment.airDensity,
                             unit = "kg/m³",
+                            icon = Icons.Default.Air,
                             onValueChange = viewModel::updateAirDensity,
                             valueRange = 0.0..2.0,
                             format = "%.3f",
@@ -351,6 +387,7 @@ fun EnvironmentParametersSection(viewModel: HomeViewModel) {
                             label = "Wind Speed",
                             value = viewModel.environment.windSpeed,
                             unit = "m/s",
+                            icon = Icons.Default.Speed,
                             onValueChange = viewModel::updateWindSpeed,
                             valueRange = 0.0..50.0,
                             format = "%.1f",
@@ -361,6 +398,7 @@ fun EnvironmentParametersSection(viewModel: HomeViewModel) {
                             label = "Wind Direction",
                             value = viewModel.environment.windDirection,
                             unit = "°",
+                            icon = Icons.Default.Explore,
                             onValueChange = viewModel::updateWindDirection,
                             valueRange = 0.0..360.0,
                             format = "%.0f",
@@ -377,6 +415,7 @@ fun EnvironmentParametersSection(viewModel: HomeViewModel) {
                             label = "Temperature",
                             value = viewModel.environment.temperature,
                             unit = "°C",
+                            icon = Icons.Default.Thermostat,
                             onValueChange = viewModel::updateTemperature,
                             valueRange = -50.0..100.0,
                             format = "%.1f",
@@ -387,6 +426,7 @@ fun EnvironmentParametersSection(viewModel: HomeViewModel) {
                             label = "Pressure",
                             value = viewModel.environment.pressure,
                             unit = "Pa",
+                            icon = Icons.Default.Speed,
                             onValueChange = viewModel::updatePressure,
                             valueRange = 50000.0..150000.0,
                             format = "%.0f",
@@ -470,6 +510,79 @@ fun EnvironmentParametersSection(viewModel: HomeViewModel) {
                             }
                         )
                     }
+
+                    // ── Advanced (optional) section ──
+                    AdvancedSectionToggle(
+                        expanded = advancedExpanded,
+                        onToggle = { advancedExpanded = !advancedExpanded },
+                        label = "Advanced Atmosphere & Wind"
+                    )
+
+                    if (advancedExpanded) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            ParameterRow(
+                                label = "Altitude",
+                                value = viewModel.environment.altitude,
+                                unit = "m",
+                                icon = Icons.Default.Terrain,
+                                onValueChange = viewModel::updateAltitude,
+                                valueRange = 0.0..9000.0,
+                                format = "%.0f",
+                                modifier = Modifier.weight(1f)
+                            )
+
+                            ParameterRow(
+                                label = "Temp. Lapse Rate",
+                                value = viewModel.environment.temperatureLapseRate,
+                                unit = "K/m",
+                                icon = Icons.Default.TrendingDown,
+                                onValueChange = viewModel::updateTemperatureLapseRate,
+                                valueRange = 0.0..0.02,
+                                format = "%.4f",
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            ParameterRow(
+                                label = "Wind Gust Speed",
+                                value = viewModel.environment.windGustSpeed,
+                                unit = "m/s",
+                                icon = Icons.Default.Air,
+                                onValueChange = viewModel::updateWindGustSpeed,
+                                valueRange = 0.0..50.0,
+                                format = "%.1f",
+                                modifier = Modifier.weight(1f)
+                            )
+
+                            ParameterRow(
+                                label = "Gust Frequency",
+                                value = viewModel.environment.windGustFrequency,
+                                unit = "Hz",
+                                icon = Icons.Default.Waves,
+                                onValueChange = viewModel::updateWindGustFrequency,
+                                valueRange = 0.0..5.0,
+                                format = "%.2f",
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+
+                        ParameterRow(
+                            label = "Turbulence Intensity",
+                            value = viewModel.environment.turbulenceIntensity,
+                            unit = "",
+                            icon = Icons.Default.Air,
+                            onValueChange = viewModel::updateTurbulenceIntensity,
+                            valueRange = 0.0..1.0,
+                            format = "%.2f"
+                        )
+                    }
                 }
             }
         }
@@ -524,7 +637,6 @@ fun MathematicalExpressionsSection() {
                 modifier = Modifier.padding(vertical = 16.dp)
             )
 
-            // Placeholder content
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -563,11 +675,14 @@ fun MathematicalExpressionsSection() {
     }
 }
 
+// ── Helper Components ───────────────────────────────────────────────────
+
 @Composable
 fun ParameterRow(
     label: String,
     value: Double,
     unit: String,
+    icon: ImageVector,
     onValueChange: (Double) -> Unit,
     valueRange: ClosedFloatingPointRange<Double>,
     format: String = "%.2f",
@@ -588,13 +703,17 @@ fun ParameterRow(
                     if (it in valueRange) onValueChange(it)
                 }
             },
-
+            leadingIcon = {
+                Icon(icon, contentDescription = null, tint = TrajectoryColors.Purple)
+            },
             trailingIcon = {
-                Text(
-                    text = unit,
-                    fontSize = 12.sp,
-                    color = TrajectoryColors.TextSecondary
-                )
+                if (unit.isNotEmpty()) {
+                    Text(
+                        text = unit,
+                        fontSize = 12.sp,
+                        color = TrajectoryColors.TextSecondary
+                    )
+                }
             },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
@@ -611,7 +730,7 @@ fun DerivedPropertyRow(
     label: String,
     value: Double,
     unit: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector
+    icon: ImageVector
 ) {
     Row(
         modifier = Modifier
@@ -659,5 +778,110 @@ fun PresetButton(text: String, onClick: () -> Unit) {
         )
     ) {
         Text(text, fontSize = 12.sp)
+    }
+}
+
+/**
+ * Collapsible toggle row for "Advanced" optional parameters.
+ */
+@Composable
+fun AdvancedSectionToggle(
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    label: String = "Advanced Settings"
+) {
+    Column {
+        HorizontalDivider(
+            color = TrajectoryColors.Divider,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onToggle() }
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.Tune,
+                    contentDescription = null,
+                    tint = TrajectoryColors.Purple,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = label,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TrajectoryColors.TextSecondary
+                )
+            }
+            Icon(
+                if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                contentDescription = if (expanded) "Collapse" else "Expand",
+                tint = TrajectoryColors.TextSecondary
+            )
+        }
+    }
+}
+
+/**
+ * Dropdown picker for the projectile drag model.
+ */
+@Composable
+fun DragModelPicker(
+    selected: DragModel,
+    onSelect: (DragModel) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Column {
+        Text(
+            text = "Drag Model",
+            fontSize = 12.sp,
+            color = TrajectoryColors.TextSecondary,
+            modifier = Modifier.padding(bottom = 4.dp)
+        )
+
+        Box {
+            OutlinedTextField(
+                value = selected.name,
+                onValueChange = {},
+                readOnly = true,
+                leadingIcon = {
+                    Icon(Icons.Default.Functions, contentDescription = null, tint = TrajectoryColors.Purple)
+                },
+                trailingIcon = {
+                    IconButton(onClick = { expanded = true }) {
+                        Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expanded = true },
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = TrajectoryColors.Purple,
+                    unfocusedBorderColor = TrajectoryColors.Divider
+                )
+            )
+
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                DragModel.entries.forEach { model ->
+                    DropdownMenuItem(
+                        text = { Text(model.name) },
+                        onClick = {
+                            onSelect(model)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
     }
 }

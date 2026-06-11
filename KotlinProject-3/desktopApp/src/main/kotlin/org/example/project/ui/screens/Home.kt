@@ -1,13 +1,16 @@
 // Home.kt - At the top, remove any ambiguous imports
 package org.example.project
 
-import HomeViewModel
-import TrajectoryColors
+import org.example.project.ui.them.TrajectoryTheme
+import org.example.project.viewmodel.HomeViewModel
+import org.example.project.LocalAppSettings
+import org.example.project.LocalOnSettingsChange
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -25,28 +28,22 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import data.models.EnvironmentData
 import data.models.ProjectileData
+import org.example.project.ui.them.TrajectoryColors
 import ui.screens.*
 
 // ... rest of your code
 // ── Tab definitions ────────────────────────────────────────────
 enum class AppTab(val label: String) {
     HOME        ("Home"),
-    PROJECTILE  ("Projectile info"),
     SIM_2D      ("2D Simulation"),
     SIM_3D      ("3D Simulation"),
+    PROJECTILE  ("Projectile info"),
     DATA        ("Data"),
     EXPORT      ("Export")
 }
@@ -87,41 +84,78 @@ fun sidebarItemsFor(tab: AppTab): List<SidebarItem> = when (tab) {
     )
 }
 
+// ── Settings state ─────────────────────────────────────────────
+data class AppSettings(
+    val projectName: String = "Untitled Project",
+    val backupIntervalMinutes: Int = 10,
+    val darkMode: Boolean = false,
+    val language: String = "English",
+    val fontSize: Int = 14,
+    val reportAuthorName: String = "",
+    val reportCompany: String = "",
+    val reportLogoPath: String = "",
+    val reportDepartment: String = "",
+    val reportContact: String = "",
+    val reportFootnote: String = ""
+)
+
 // ── Main home/workspace composable ────────────────────────────
 @Composable
 fun HomeScreen(projectConfig: NewProjectConfig) {
-    var selectedTab by remember { mutableStateOf(AppTab.HOME) }
+    var selectedTab     by remember { mutableStateOf(AppTab.HOME) }
     var sidebarExpanded by remember { mutableStateOf(false) }
+    var showSettings    by remember { mutableStateOf(false) }
+    var appSettings     by remember { mutableStateOf(AppSettings(projectName = projectConfig.name)) }
 
-    // Create shared ViewModel for projectile and environment data
     val homeViewModel = remember { HomeViewModel() }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    // ── Auto-save coroutine — fires every backupIntervalMinutes ───────────
+    LaunchedEffect(appSettings.backupIntervalMinutes) {
+        while (isActive) {
+            delay(appSettings.backupIntervalMinutes * 60_000L)
+            // TODO: replace with your real save call, e.g. projectManager.save()
+            println("[AutoSave] Project '${appSettings.projectName}' saved at ${System.currentTimeMillis()}")
+        }
+    }
 
-        // ── Top Tab Bar ──────────────────────────────────────
-        TopTabBar(
-            selectedTab = selectedTab,
-            projectName = projectConfig.name,
-            onTabSelected = { selectedTab = it }
-        )
-
-        // ── Body: sidebar + main area ────────────────────────
-        Row(modifier = Modifier.fillMaxSize()) {
-
-            // Sidebar
-            CollapsibleSidebar(
-                expanded   = sidebarExpanded,
-                onExpand   = { sidebarExpanded = true },
-                onCollapse = { sidebarExpanded = false },
-                items      = sidebarItemsFor(selectedTab)
-            )
-
-            // Main content area - pass the ViewModel data
-            MainContentArea(
-                tab = selectedTab,
-                homeViewModel= homeViewModel,
-
+    // ── Provide settings + theme to the entire workspace ─────────────────
+    CompositionLocalProvider(
+        LocalAppSettings       provides appSettings,
+        LocalOnSettingsChange  provides { appSettings = it }
+    ) {
+        TrajectoryTheme(
+            darkMode = appSettings.darkMode,
+            fontSize = appSettings.fontSize
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                TopTabBar(
+                    selectedTab   = selectedTab,
+                    projectName   = appSettings.projectName,
+                    onTabSelected = { selectedTab = it }
                 )
+                Row(modifier = Modifier.fillMaxSize()) {
+                    CollapsibleSidebar(
+                        expanded       = sidebarExpanded,
+                        onExpand       = { sidebarExpanded = true },
+                        onCollapse     = { sidebarExpanded = false },
+                        items          = sidebarItemsFor(selectedTab),
+                        onNewProject   = { /* wire to navigation */ },
+                        onOpenProject  = { /* wire to navigation */ },
+                        onSaveProject  = { /* trigger save */ },
+                        onCloseProject = { /* wire to navigation */ },
+                        onOpenSettings = { showSettings = true }
+                    )
+                    MainContentArea(tab = selectedTab, homeViewModel = homeViewModel)
+                }
+            }
+
+            if (showSettings) {
+                SettingsDialog(
+                    settings  = appSettings,
+                    onChange  = { appSettings = it },
+                    onDismiss = { showSettings = false }
+                )
+            }
         }
     }
 }
@@ -173,13 +207,13 @@ fun TopTabBar(
                 horizontalArrangement = Arrangement.SpaceBetween
             ){
 
-                    Text(
-                        text = selectedTab.label,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TrajectoryColors.Purple,
-                        fontFamily = FontFamily.Monospace
-                    )
+                Text(
+                    text = selectedTab.label,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TrajectoryColors.Purple,
+                    fontFamily = FontFamily.Monospace
+                )
 
 
                 // Tabs row
@@ -238,109 +272,164 @@ fun TabItem(tab: AppTab, selected: Boolean, onClick: () -> Unit) {
     }
 }
 
-// ── Collapsible Sidebar ────────────────────────────────────────
+// ── Collapsible Sidebar (two-zone) ────────────────────────────
 @Composable
 fun CollapsibleSidebar(
-    expanded:   Boolean,
-    onExpand:   () -> Unit,
-    onCollapse: () -> Unit,
-    items:      List<SidebarItem>
+    expanded:       Boolean,
+    onExpand:       () -> Unit,
+    onCollapse:     () -> Unit,
+    items:          List<SidebarItem>,
+    onNewProject:   () -> Unit,
+    onOpenProject:  () -> Unit,
+    onSaveProject:  () -> Unit,
+    onCloseProject: () -> Unit,
+    onOpenSettings: () -> Unit
 ) {
-    // Hover detection strip — always visible, triggers expand
     Row(modifier = Modifier.fillMaxHeight()) {
 
-        // Thin hover-sensitive strip when collapsed
+        // Thin strip when collapsed
         if (!expanded) {
             Box(
                 modifier = Modifier
                     .fillMaxHeight()
                     .width(6.dp)
                     .background(TrajectoryColors.Purple.copy(alpha = 0.15f))
-                    .pointerInput(Unit) {
-                        awaitPointerEventScope {
-                            while (true) {
-                                val event = awaitPointerEvent()
-                                if (event.changes.any { it.pressed.not() }) {
-                                    onExpand()
-                                }
-                            }
-                        }
-                    }
-                    .clickable { onExpand() }   // fallback click
+                    .clickable { onExpand() }
             )
         }
 
-        // Animated sidebar panel
         AnimatedVisibility(
             visible = expanded,
-            enter   = slideInHorizontally(
-                initialOffsetX = { -it },
-                animationSpec  = tween(200)
-            ) + fadeIn(tween(150)),
-            exit    = slideOutHorizontally(
-                targetOffsetX = { -it },
-                animationSpec = tween(180)
-            ) + fadeOut(tween(120))
+            enter   = slideInHorizontally(initialOffsetX = { -it }, animationSpec = tween(200)) + fadeIn(tween(150)),
+            exit    = slideOutHorizontally(targetOffsetX = { -it }, animationSpec = tween(180)) + fadeOut(tween(120))
         ) {
             Surface(
-                modifier        = Modifier
+                modifier = Modifier
                     .fillMaxHeight()
                     .width(220.dp)
                     .pointerInput(Unit) {
-                        // collapse when pointer leaves the sidebar
                         awaitPointerEventScope {
                             while (true) {
                                 val event = awaitPointerEvent()
-                                val inBounds = event.changes.any { change ->
-                                    change.position.x in 0f..size.width.toFloat() &&
-                                            change.position.y in 0f..size.height.toFloat()
+                                val inBounds = event.changes.any { c ->
+                                    c.position.x in 0f..size.width.toFloat() &&
+                                            c.position.y in 0f..size.height.toFloat()
                                 }
                                 if (!inBounds) onCollapse()
                             }
                         }
                     },
-                color           = Color.White,
-                shadowElevation = 4.dp
+                color = Color.White,
+                shadowElevation = 6.dp
             ) {
-                Column(modifier = Modifier.fillMaxSize().padding(vertical = 12.dp)) {
+                Column(modifier = Modifier.fillMaxSize()) {
 
-                    // Header
+                    // ── Header ───────────────────────────────
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                            .background(TrajectoryColors.Purple)
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment     = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            "Options",
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize   = 13.sp,
-                            color      = TrajectoryColors.TextPrimary
+                            "Workspace",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = Color.White,
+                            fontFamily = FontFamily.Monospace
                         )
-                        IconButton(
-                            onClick  = onCollapse,
-                            modifier = Modifier.size(28.dp)
-                        ) {
+                        IconButton(onClick = onCollapse, modifier = Modifier.size(24.dp)) {
                             Icon(
                                 Icons.Default.ChevronLeft,
-                                contentDescription = "Hide sidebar",
-                                tint = TrajectoryColors.TextMuted,
-                                modifier = Modifier.size(18.dp)
+                                contentDescription = "Collapse",
+                                tint = Color.White.copy(alpha = 0.8f),
+                                modifier = Modifier.size(16.dp)
                             )
                         }
                     }
 
-                    HorizontalDivider(
-                        color    = TrajectoryColors.Divider,
-                        modifier = Modifier.padding(horizontal = 12.dp)
-                    )
+                    // ── TOP ZONE: Context items (per-tab) ────
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .padding(vertical = 8.dp)
+                    ) {
+                        SidebarSectionLabel("Current View")
+                        items.forEach { item -> SidebarRow(item = item) }
+                    }
 
-                    Spacer(Modifier.height(8.dp))
+                    // ── BOTTOM ZONE: Persistent actions ──────
+                    HorizontalDivider(color = TrajectoryColors.Divider)
 
-                    // Sidebar items
-                    items.forEach { item ->
-                        SidebarRow(item = item)
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 4.dp)
+                    ) {
+                        SidebarSectionLabel("Project")
+
+                        SidebarActionRow(
+                            label = "New Project",
+                            icon  = Icons.Default.CreateNewFolder,
+                            onClick = onNewProject
+                        )
+                        SidebarActionRow(
+                            label = "Open Project",
+                            icon  = Icons.Default.FolderOpen,
+                            onClick = onOpenProject
+                        )
+                        SidebarActionRow(
+                            label = "Save",
+                            icon  = Icons.Default.Save,
+                            onClick = onSaveProject
+                        )
+                        SidebarActionRow(
+                            label = "Close Project",
+                            icon  = Icons.Default.Close,
+                            onClick = onCloseProject,
+                            tint = Color(0xFFDC2626)
+                        )
+
+                        HorizontalDivider(
+                            color = TrajectoryColors.Divider,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                        )
+
+                        // Settings button — highlighted
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onOpenSettings() }
+                                .background(TrajectoryColors.Purple.copy(alpha = 0.06f))
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    Icons.Default.Settings,
+                                    contentDescription = "Settings",
+                                    tint = TrajectoryColors.Purple,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(Modifier.width(10.dp))
+                                Text(
+                                    "Settings",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = TrajectoryColors.Purple
+                                )
+                            }
+                            Icon(
+                                Icons.Default.ChevronRight,
+                                contentDescription = null,
+                                tint = TrajectoryColors.Purple.copy(alpha = 0.5f),
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -349,28 +438,59 @@ fun CollapsibleSidebar(
 }
 
 @Composable
-fun SidebarRow(item: SidebarItem) {
-    var hovered by remember { mutableStateOf(false) }
+private fun SidebarSectionLabel(label: String) {
+    Text(
+        text = label.uppercase(),
+        fontSize = 10.sp,
+        fontWeight = FontWeight.Bold,
+        color = TrajectoryColors.TextMuted,
+        letterSpacing = 1.sp,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+    )
+}
 
+@Composable
+fun SidebarRow(item: SidebarItem) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { /* will wire to actions later */ }
-            .background(
-                if (hovered) TrajectoryColors.Purple.copy(alpha = 0.06f)
-                else Color.Transparent
-            )
+            .clickable { }
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            imageVector      = item.icon,
+            imageVector = item.icon,
             contentDescription = item.label,
-            tint             = TrajectoryColors.Purple,
-            modifier         = Modifier.size(18.dp)
+            tint = TrajectoryColors.Purple,
+            modifier = Modifier.size(18.dp)
         )
         Spacer(Modifier.width(10.dp))
         Text(item.label, fontSize = 13.sp, color = TrajectoryColors.TextPrimary)
+    }
+}
+
+@Composable
+private fun SidebarActionRow(
+    label:   String,
+    icon:    ImageVector,
+    onClick: () -> Unit,
+    tint:    Color = TrajectoryColors.TextPrimary
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 9.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            tint = tint.copy(alpha = 0.75f),
+            modifier = Modifier.size(17.dp)
+        )
+        Spacer(Modifier.width(10.dp))
+        Text(label, fontSize = 13.sp, color = tint)
     }
 }
 // Helper function to convert RGB Ints to Color
@@ -389,10 +509,10 @@ fun MainContentArea(
 ) {
     when (tab) {
         AppTab.HOME -> {
-            HomeContent()
+            HomeContent(homeViewModel)
         }
         AppTab.PROJECTILE -> {
-            ProjectileCharacteristicsScreen(homeViewModel.projectile)
+            ProjectileCharacteristicsScreen(homeViewModel)
         }
         AppTab.SIM_2D -> {
             TwoDSimulationScreen(

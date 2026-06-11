@@ -1,9 +1,9 @@
 package org.example.project
 
-import ProjectManager
-import RecentProject
-import StartPage
-import TrajectoryTheme
+import org.example.project.ui.screens.ProjectManager
+import org.example.project.ui.screens.RecentProject
+import org.example.project.ui.screens.StartPage
+import org.example.project.ui.them.TrajectoryTheme
 import androidx.compose.runtime.*
 import ui.screens.NewProjectConfig
 import ui.screens.NewProjectDialog

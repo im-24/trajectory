@@ -4,22 +4,24 @@ package data.models
 import kotlinx.serialization.Serializable
 import java.util.Date
 
-
-
 @Serializable
 data class TrajectoryPoint(
-    val time: Double,      // seconds
-    val x: Double,         // meters (forward)
-    val y: Double,         // meters (height)
-    val z: Double,         // meters (lateral)
-    val vx: Double,        // m/s
-    val vy: Double,        // m/s
-    val vz: Double,        // m/s
-    val speed: Double,     // m/s (total velocity)
-    val angle: Double,     // degrees (flight path elevation)
-    val azimuth: Double,   // degrees (horizontal direction)
+    val time: Double,
+    val x: Double,
+    val y: Double,
+    val z: Double,
+    val vx: Double,
+    val vy: Double,
+    val vz: Double,
+    val speed: Double,
+    val angle: Double,
+    val azimuth: Double,
     val kineticEnergy: Double,
-    val potentialEnergy: Double
+    val potentialEnergy: Double,
+    val mach: Double = 0.0,
+    val dragCoefficient: Double = 0.0,
+    val airDensity: Double = 0.0,
+    val temperature: Double = 0.0
 )
 
 @Serializable
@@ -29,12 +31,12 @@ data class TrajectoryResult(
     val projectileData: ProjectileData,
     val environmentData: EnvironmentData,
     val initialVelocity: Double,
-    val launchElevation: Double,   // renamed from launchAngle
-    val launchAzimuth: Double,     // new: 0° = +X, 90° = +Z
+    val launchElevation: Double,
+    val launchAzimuth: Double,
     val initialHeight: Double,
     val points: List<TrajectoryPoint>,
     val maxHeight: Double,
-    val maxDistance: Double,       // horizontal distance (sqrt(x²+z²))
+    val maxDistance: Double,
     val timeOfFlight: Double,
     val impactVelocity: Double,
     val impactAngle: Double
@@ -57,18 +59,24 @@ data class TrajectoryResult(
     }
 }
 
+enum class DragModel { G1, G7, SPHERE, CUSTOM_CD }
 
 @Serializable
 data class ProjectileData(
     val name: String = "Projectile",
-    val mass: Double = 1.0,          // kg
-    val radius: Double = 0.1,        // meters
-    val diameter: Double = 0.2,      // meters
-    val volume: Double = 0.00418879, // m³
+    val mass: Double = 1.0,            // kg
+    val radius: Double = 0.1,          // meters
+    val diameter: Double = 0.2,        // meters
+    val volume: Double = 0.00418879,   // m³
     val material: String = "Steel",
     val colorRed: Int = 123,
     val colorGreen: Int = 94,
-    val colorBlue: Int = 167
+    val colorBlue: Int = 167,
+    val dragModel: DragModel = DragModel.SPHERE,
+    val ballisticCoefficient: Double = 0.5,
+    val spinRate: Double = 0.0,        // rad/s, 0 = no spin
+    val spinAxisYaw: Double = 0.0,     // deg
+    val spinAxisPitch: Double = 0.0    // deg
 ) {
     val surfaceArea: Double get() = 4 * Math.PI * radius * radius
     val crossSectionalArea: Double get() = Math.PI * radius * radius
@@ -76,11 +84,19 @@ data class ProjectileData(
 
 @Serializable
 data class EnvironmentData(
-    val gravity: Double = 9.81,      // m/s²
-    val airDensity: Double = 1.225,  // kg/m³
-    val windSpeed: Double = 0.0,     // m/s
-    val windDirection: Double = 0.0, // degrees
-    val temperature: Double = 20.0,  // Celsius
-    val pressure: Double = 101325.0, // Pascals
-    val humidity: Double = 0.5       // 0-1
-)
+    val gravity: Double = 9.80665,            // m/s²
+    val airDensity: Double = 1.225,           // kg/m³ at sea level (used as seaLevelAirDensity)
+    val windSpeed: Double = 0.0,              // m/s
+    val windDirection: Double = 0.0,          // degrees
+    val temperature: Double = 20.0,           // Celsius (sea-level / launch-site temp)
+    val pressure: Double = 101325.0,          // Pascals (sea-level / launch-site pressure)
+    val humidity: Double = 0.5,               // 0-1
+    val altitude: Double = 0.0,               // launch site altitude above sea level, m
+    val temperatureLapseRate: Double = 0.0065,// K/m (standard atmosphere)
+    val windGustSpeed: Double = 0.0,          // m/s
+    val windGustFrequency: Double = 0.0,      // Hz
+    val turbulenceIntensity: Double = 0.0     // 0..1
+) {
+    val seaLevelTemperatureK: Double get() = temperature + 273.15
+    val speedOfSoundSeaLevel: Double get() = kotlin.math.sqrt(1.4 * 287.05 * seaLevelTemperatureK)
+}

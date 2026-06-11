@@ -1,23 +1,32 @@
-// Start.kt
+package org.example.project.ui.screens// Start.kt
+import androidx.compose.foundation.BorderStroke
+import org.example.project.ui.them.MeshGradientBackground
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.*
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.unit.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.text.platform.Font
 import java.io.File
+import androidx.compose.ui.text.font.FontFamily
+
 import javax.swing.JFileChooser
 import javax.swing.JOptionPane
-import javax.swing.filechooser.FileNameExtensionFilter
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.decodeFromString
-import java.util.Date
+import org.example.project.RecentProjectsTable
+import org.example.project.StartPageTopBar
+import org.example.project.ui.them.TrajectoryColors
+import org.example.project.ui.them.TrajectoryTheme
+import org.example.project.ui.them.premierfont
+import org.example.project.ui.them.welledge
+import java.awt.Color
+import javax.swing.filechooser.FileFilter
+import javax.swing.plaf.basic.BasicBorders
 
 @Serializable
 data class ProjectMetadata(
@@ -70,44 +79,42 @@ fun StartPage(
                 onSearchChange = { searchQuery = it; onSearch(it) }
             )
 
-            // ── Main Content ─────────────────────────────────
-            Row(modifier = Modifier.fillMaxSize()) {
+            // ── Main Content ────────────────────────────────
+            Column(modifier = Modifier.fillMaxSize()) {
 
-                // Left: Branding + Actions
-                Column(
+                Row(
                     modifier = Modifier
-                        .width(380.dp)
-                        .fillMaxHeight()
+                        .fillMaxWidth()
+                        .height(600.dp)
                         .padding(start = 56.dp, top = 80.dp),
-                    verticalArrangement = Arrangement.Top
                 ) {
                     // App title
                     Text(
-                        text = "Trajectory",
+                        text = "TRAJECTORY",
                         style = MaterialTheme.typography.displayLarge,
-                        color = TrajectoryColors.TextPrimary
+                        color = TrajectoryColors.Background
                     )
 
-                    Spacer(Modifier.height(8.dp))
 
-                    // Tagline
-                    Text(
-                        text = "Model. Simulate. Visualize.",
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 14.sp,
-                        color = TrajectoryColors.TaglineColor,
-                        letterSpacing = 0.5.sp
-                    )
+                }
+                Column(
+                    modifier = Modifier.fillMaxSize()
+                        .padding(32.dp)   ,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalAlignment = Alignment.Start,
 
-                    Spacer(Modifier.height(72.dp))
-
-                    // New Project button (purple)
+                )
+                {
                     Button(
                         onClick = onNewProject,
-                        modifier = Modifier.width(180.dp).height(48.dp),
+                        modifier = Modifier.width(180.dp).height(48.dp).defaultMinSize(1.dp , 1.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = TrajectoryColors.Purple
+                            containerColor = MaterialTheme.colorScheme.background.copy(0f),
                         ),
+                        contentPadding = PaddingValues(0.dp), // Clears inner padding
+                   // Clears min siz
+
+                        border = BorderStroke(1.dp , TrajectoryColors.Background) ,
                         shape = MaterialTheme.shapes.medium
                     ) {
                         Text(
@@ -117,50 +124,53 @@ fun StartPage(
                         )
                     }
 
-                    Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(12.dp))
 
-                    // Open Project button (lime green) - with file chooser
-                    Button(
-                        onClick = {
-                            val project = projectManager.openExistingProject()
-                            if (project != null) {
-                                // Update the recent projects list
-                                projectsList = projectManager.loadRecentProjects()
-                                // Call the onOpenProject callback with the project data
-                                onOpenProject()
-                                // You can also pass the project data to navigate
-                            }
-                        },
-                        modifier = Modifier.width(180.dp).height(48.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = TrajectoryColors.LimeGreen
-                        ),
-                        shape = MaterialTheme.shapes.medium
-                    ) {
-                        Text(
-                            "Open project",
-                            color = TrajectoryColors.TextPrimary,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
+                        // Open Project button (lime green) - with file chooser
+                        Button(
+                            onClick = {
+                                val project = projectManager.openExistingProject()
+                                if (project != null) {
+                                    // Update the recent projects list
+                                    projectsList = projectManager.loadRecentProjects()
+                                    // Call the onOpenProject callback with the project data
+                                    onOpenProject()
+                                    // You can also pass the project data to navigate
+                                }
+                            },
+                            modifier = Modifier.width(180.dp).height(48.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = TrajectoryColors.LimeGreen
+                            ),
+                            shape = MaterialTheme.shapes.extraLarge
+                        ) {
+                            Text(
+                                "Open project",
+                                color = TrajectoryColors.TextPrimary,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
 
-                    Spacer(Modifier.height(16.dp))
+                        Spacer(Modifier.height(16.dp))
 
-                    // Clear recent projects button
-                    TextButton(
-                        onClick = {
-                            projectManager.clearRecentProjects()
-                            projectsList = emptyList()
-                        },
-                        modifier = Modifier.width(180.dp)
-                    ) {
-                        Text(
-                            "Clear recent projects",
-                            fontSize = 11.sp,
-                            color = TrajectoryColors.TextMuted
-                        )
+                        // Clear recent projects button
+                        TextButton(
+                            onClick = {
+                                projectManager.clearRecentProjects()
+                                projectsList = emptyList()
+                            },
+                            modifier = Modifier.width(180.dp)
+                        ) {
+                            Text(
+                                "Clear recent projects",
+                                fontSize = 11.sp,
+                                color = TrajectoryColors.TextMuted
+                            )
+                        }
                     }
                 }
+                    // New Project button (purple)
+
 
                 // Right: Recent Projects Table
                 Column(
@@ -192,27 +202,31 @@ fun StartPage(
                         }
                     )
                 }
-            }
 
+    }
             // ── Footer ───────────────────────────────────────
             Box(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.BottomCenter,
+
+
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Developed by ", color = TrajectoryColors.TextMuted, fontSize = 12.sp)
+
                     Text(
                         "WELLEDG",
                         color = TrajectoryColors.LimeGreen,
+                        fontFamily = welledge,
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp
                     )
                     Text(" team", color = TrajectoryColors.TextMuted, fontSize = 12.sp)
                 }
-            }
-        }
+
+        } }
     }
-}
+
 
 // Project Manager class to handle project operations
 class ProjectManager {
@@ -274,7 +288,7 @@ class ProjectManager {
         val fileChooser = JFileChooser(projectsDir)
         fileChooser.dialogTitle = "Open Trajectory Project"
         fileChooser.fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
-        fileChooser.fileFilter = object : javax.swing.filechooser.FileFilter() {
+        fileChooser.fileFilter = object : FileFilter() {
             override fun accept(f: File): Boolean {
                 return f.isDirectory && File(f, "project_config.json").exists() || f.isDirectory && f == projectsDir
             }

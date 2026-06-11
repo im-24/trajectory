@@ -1,11 +1,13 @@
+package org.example.project.viewmodel
+
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
+import data.models.DragModel
 
 import data.models.EnvironmentData
 import data.models.ProjectileData
-import kotlin.Int
 import kotlin.math.PI
 
 
@@ -60,7 +62,39 @@ class HomeViewModel {
     fun updateWindSpeed(speed: Double) {
         environment = environment.copy(windSpeed = speed)
     }
+    // Projectile advanced
+    fun updateProjectileDragModel(model: DragModel) {
+        projectile = projectile.copy(dragModel = model)
+    }
+    fun updateProjectileBallisticCoefficient(value: Double) {
+        projectile = projectile.copy(ballisticCoefficient = value)
+    }
+    fun updateProjectileSpinRate(value: Double) {
+        projectile = projectile.copy(spinRate = value)
+    }
+    fun updateProjectileSpinAxisYaw(value: Double) {
+        projectile = projectile.copy(spinAxisYaw = value)
+    }
+    fun updateProjectileSpinAxisPitch(value: Double) {
+        projectile = projectile.copy(spinAxisPitch = value)
+    }
 
+    // Environment advanced
+    fun updateAltitude(value: Double) {
+        environment = environment.copy(altitude = value)
+    }
+    fun updateTemperatureLapseRate(value: Double) {
+        environment = environment.copy(temperatureLapseRate = value)
+    }
+    fun updateWindGustSpeed(value: Double) {
+        environment = environment.copy(windGustSpeed = value)
+    }
+    fun updateWindGustFrequency(value: Double) {
+        environment = environment.copy(windGustFrequency = value)
+    }
+    fun updateTurbulenceIntensity(value: Double) {
+        environment = environment.copy(turbulenceIntensity = value)
+    }
     fun updateWindDirection(direction: Double) {
         environment = environment.copy(windDirection = direction)
     }
