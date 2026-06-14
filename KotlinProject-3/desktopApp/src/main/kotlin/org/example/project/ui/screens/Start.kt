@@ -1,32 +1,37 @@
 package org.example.project.ui.screens// Start.kt
+import SecondaryButtonLarge
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import org.example.project.ui.them.MeshGradientBackground
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.GenericShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.unit.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.text.platform.Font
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
 import java.io.File
-import androidx.compose.ui.text.font.FontFamily
-
 import javax.swing.JFileChooser
 import javax.swing.JOptionPane
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
+import mainButtonLarge
 import org.example.project.RecentProjectsTable
 import org.example.project.StartPageTopBar
 import org.example.project.ui.them.TrajectoryColors
-import org.example.project.ui.them.TrajectoryTheme
-import org.example.project.ui.them.premierfont
-import org.example.project.ui.them.welledge
-import java.awt.Color
+import org.example.project.ui.them.TrajectoryTyp
 import javax.swing.filechooser.FileFilter
-import javax.swing.plaf.basic.BasicBorders
 
 @Serializable
 data class ProjectMetadata(
@@ -55,137 +60,142 @@ data class RecentProject(
 
 @Composable
 fun StartPage(
+    Dialogblure: Dp,
     recentProjects: List<RecentProject>,
     onNewProject: () -> Unit,
     onOpenProject: () -> Unit,
     onOpenRecent: (RecentProject) -> Unit,
-    onSearch: (String) -> Unit
+    onSearch: (String) -> Unit,
+    onInfoRequest: ()   -> Unit ,
 ) {
     var searchQuery by remember { mutableStateOf("") }
     val projectManager = remember { ProjectManager() }
     var projectsList by remember { mutableStateOf(recentProjects) }
+    var masklistcoordinat by remember {mutableStateOf(Offset.Zero) }
+    var listwidth by remember { mutableStateOf(0) }
+    var listheight by remember { mutableStateOf(0) }
+
+    val projectlist = GenericShape{size , _ ->
+        moveTo(masklistcoordinat.x , (masklistcoordinat.y))
+        lineTo(masklistcoordinat.x+ listwidth , masklistcoordinat.y  )
+        lineTo(masklistcoordinat.x+ listwidth , masklistcoordinat.y+listheight  )
+        lineTo(masklistcoordinat.x , masklistcoordinat.y+listheight)
+        close()
+    }
 
     // Load saved projects on startup
     LaunchedEffect(Unit) {
         projectsList = projectManager.loadRecentProjects()
     }
+    MeshGradientBackground (blurposition = projectlist ){
 
-    MeshGradientBackground {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()
+            .padding(horizontal = 32.dp)
+            .blur(Dialogblure)) {
 
             // ── Top Bar ──────────────────────────────────────
+
             StartPageTopBar(
                 searchQuery = searchQuery,
-                onSearchChange = { searchQuery = it; onSearch(it) }
+                onSearchChange = { searchQuery = it; onSearch(it) } ,
+                appInfo = onInfoRequest
             )
 
-            // ── Main Content ────────────────────────────────
-            Column(modifier = Modifier.fillMaxSize()) {
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(600.dp)
-                        .padding(start = 56.dp, top = 80.dp),
-                ) {
+            Column(
+                modifier = Modifier.fillMaxWidth().weight(4f)
+                    .padding(16.dp,48.dp),
+            )
+            {
                     // App title
                     Text(
                         text = "TRAJECTORY",
                         style = MaterialTheme.typography.displayLarge,
                         color = TrajectoryColors.Background
                     )
+                Spacer(Modifier.height(16.dp))
+                    Text(
+                        text = "Model . Simulate . Predict",
+                        style = MaterialTheme.typography.displayMedium,
+                        color = TrajectoryColors.PurpleLight
+                    )
+                Spacer(Modifier.height(56.dp))
+            }
 
+            Row(
+                modifier = Modifier.weight(5f)
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ){
+                Column(modifier = Modifier.weight(1f).padding(32.dp)
+                    .fillMaxHeight()
+                    ,verticalArrangement = Arrangement.Center,) {
 
-                }
-                Column(
-                    modifier = Modifier.fillMaxSize()
-                        .padding(32.dp)   ,
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    horizontalAlignment = Alignment.Start,
-
-                )
-                {
-                    Button(
-                        onClick = onNewProject,
-                        modifier = Modifier.width(180.dp).height(48.dp).defaultMinSize(1.dp , 1.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.background.copy(0f),
-                        ),
-                        contentPadding = PaddingValues(0.dp), // Clears inner padding
-                   // Clears min siz
-
-                        border = BorderStroke(1.dp , TrajectoryColors.Background) ,
-                        shape = MaterialTheme.shapes.medium
-                    ) {
+                    mainButtonLarge (onNewProject){
                         Text(
                             "New project",
-                            fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.Medium
+                            fontFamily = TrajectoryTyp.premierfont,
+                            fontWeight = MaterialTheme.typography.displayLarge.fontWeight,
+
+                            color = TrajectoryColors.TextPrimary
                         )
                     }
 
-                        Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(16.dp))
 
-                        // Open Project button (lime green) - with file chooser
-                        Button(
-                            onClick = {
-                                val project = projectManager.openExistingProject()
-                                if (project != null) {
-                                    // Update the recent projects list
-                                    projectsList = projectManager.loadRecentProjects()
-                                    // Call the onOpenProject callback with the project data
-                                    onOpenProject()
-                                    // You can also pass the project data to navigate
-                                }
-                            },
-                            modifier = Modifier.width(180.dp).height(48.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = TrajectoryColors.LimeGreen
-                            ),
-                            shape = MaterialTheme.shapes.extraLarge
-                        ) {
-                            Text(
-                                "Open project",
-                                color = TrajectoryColors.TextPrimary,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
+                    SecondaryButtonLarge  (
+                        onClick = {
+                            val project = projectManager.openExistingProject()
+                            if (project != null) {
+                                projectsList = projectManager.loadRecentProjects()
+                                onOpenProject()
+                            }
+                        },
 
-                        Spacer(Modifier.height(16.dp))
+                    )
+                    {
+                        Text(
+                            "Open project",
+                            color = TrajectoryColors.Background,
+                            fontWeight = FontWeight.Medium,
+                            fontFamily = MaterialTheme.typography.bodyMedium.fontFamily,
+                        )
 
-                        // Clear recent projects button
-                        TextButton(
-                            onClick = {
-                                projectManager.clearRecentProjects()
-                                projectsList = emptyList()
-                            },
-                            modifier = Modifier.width(180.dp)
-                        ) {
-                            Text(
-                                "Clear recent projects",
-                                fontSize = 11.sp,
-                                color = TrajectoryColors.TextMuted
-                            )
-                        }
                     }
+
+
                 }
-                    // New Project button (purple)
 
-
-                // Right: Recent Projects Table
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(top = 60.dp, end = 40.dp, start = 20.dp)
-                ) {
-                    RecentProjectsTable(
-                        projects = projectsList.filter { project ->
+                    modifier = Modifier.weight(2f),
+                    Arrangement.Top,
+                )
+                {
+
+
+                    Box(modifier = Modifier
+                    .height(275.dp)
+                        .padding(16.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                        .onGloballyPositioned {coordinates ->
+                            listwidth = coordinates.size.width
+                            listheight = coordinates.size.height
+                            masklistcoordinat = coordinates.positionInWindow()
+
+                        }
+
+                    .border(BorderStroke(width = 1.dp, color = TrajectoryColors.Divider.copy(0.2f))
+                        ,shape = RoundedCornerShape(8.dp))
+
+                    )
+                    {
+
+                        RecentProjectsTable(
+                            projects = projectsList.filter { project ->
                             searchQuery.isEmpty() ||
                                     project.name.contains(searchQuery, ignoreCase = true) ||
                                     project.path.contains(searchQuery, ignoreCase = true)
-                        },
-                        onOpen = { project ->
-                            // Open the selected recent project
+                            },
+                            onOpen = { project ->
                             val loadedProject = projectManager.loadProjectFromPath(project.path)
                             if (loadedProject != null) {
                                 onOpenRecent(project)
@@ -198,34 +208,54 @@ fun StartPage(
                                 )
                                 // Refresh the list
                                 projectsList = projectManager.loadRecentProjects()
+                                }
                             }
-                        }
+                        )
+                    }
+                    TextButton(
+                        onClick = {
+                            projectManager.clearRecentProjects()
+                            projectsList = emptyList()
+                        },
+                        modifier = Modifier.wrapContentSize(Alignment.Center)
+                            .align(Alignment.End).padding(16.dp).weight(1f),
                     )
+                    {
+                        Text(
+                            "Clear recent projects",
+                            color = TrajectoryColors.TextMuted,
+                            fontFamily = TrajectoryTyp.secondaryfont,
+                            fontSize = MaterialTheme.typography.labelMedium.fontSize,
+
+                            )
+                    }
                 }
 
+
+            }
+
+        // ── Footer ───────────────────────────────────────
+
+
+        Row(
+            modifier = Modifier.fillMaxWidth().weight(1f).padding(bottom = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        )
+        {
+            Text("Developed by ", color = TrajectoryColors.Background, fontSize = 12.sp)
+
+            Text(
+                "WELLEDG",
+                color = TrajectoryColors.LimeGreen,
+                fontFamily = TrajectoryTyp.welledge ,
+                fontWeight = FontWeight.Bold,
+                fontSize = 12.sp
+            )
+            Text(" team", color = TrajectoryColors.Background, fontSize = 12.sp)
+        }}
     }
-            // ── Footer ───────────────────────────────────────
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                contentAlignment = Alignment.BottomCenter,
-
-
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Developed by ", color = TrajectoryColors.TextMuted, fontSize = 12.sp)
-
-                    Text(
-                        "WELLEDG",
-                        color = TrajectoryColors.LimeGreen,
-                        fontFamily = welledge,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
-                    )
-                    Text(" team", color = TrajectoryColors.TextMuted, fontSize = 12.sp)
-                }
-
-        } }
-    }
+}
 
 
 // Project Manager class to handle project operations

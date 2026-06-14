@@ -149,7 +149,7 @@ fun ProjectileOverviewSection(viewModel: HomeViewModel) {
                                     .shadow(8.dp, CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(text = "🎯", fontSize = 48.sp)
+                                Text(text = " ", fontSize = 48.sp)
                             }
 
                             Text(

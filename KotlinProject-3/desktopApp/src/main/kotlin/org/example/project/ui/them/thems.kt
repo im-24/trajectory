@@ -12,35 +12,36 @@ import androidx.compose.ui.unit.sp
 
 // ════════════════════════════════════════════════════════════════════════════
 //  FONTS
-//  premierfont  — JetBrainsMono  (technical values, code, monospace readouts)
+//  TrajectoryTyp.premierfont  — JetBrainsMono  (technical values, code, monospace readouts)
 //  secondaryfont — Google Sans Flex  (UI text, labels, body copy)
 // ════════════════════════════════════════════════════════════════════════════
-
+object TrajectoryTyp{
 val welledge = FontFamily(
-    Font("fontFamily/IBMPlexMono-Bold.ttf", FontWeight.Normal) )
+    Font("fontFamily/IBMPlexMono-Bold.ttf", FontWeight.Bold),
+Font("fontFamily/IBMPlexMono-Regular.ttf", FontWeight.Normal),)
 
 val premierfont = FontFamily(
     Font("fontFamily/JetBrainsMono-Regular.ttf",  FontWeight.Normal),
-    Font("fontFamily/JetBrainsMono-Medium.ttf",   FontWeight.Medium),
+    Font("fontFamily/JetBrainsMono-SemiBold.ttf",   FontWeight.Medium),
     Font("fontFamily/JetBrainsMono-ExtraBold.ttf",     FontWeight.Bold)
 )
 
 val secondaryfont = FontFamily(
-    Font("fontFamily/GoogleSansFlex_24pt-Light.ttf",   FontWeight.Light),
+    Font("fontFamily/GoogleSansFlex_9pt-Thin.ttf",   FontWeight.Light),
     Font("fontFamily/GoogleSansFlex_24pt-Regular.ttf", FontWeight.Normal),
     Font("fontFamily/GoogleSansFlex_24pt-Medium.ttf",  FontWeight.Medium),
     Font("fontFamily/GoogleSansFlex_72pt-Black.ttf",   FontWeight.Bold)
 )
-
+}
 // ════════════════════════════════════════════════════════════════════════════
 //  COLOR PALETTE
 // ════════════════════════════════════════════════════════════════════════════
 
 object TrajectoryColors {
     // Brand
-    val Purple       = Color(0xFF9847CB)
-    val PurpleDark   = Color(0xFF4A139C)
-    val PurpleLight  = Color(0xFFD4B8F0)
+    val Purple       = Color(0xFF4E3761)
+    val PurpleDark   = Color(0xFF190C23)
+    val PurpleLight  = Color(0xFF9D49FF)
     val LimeGreen    = Color(0xFF82E716)
     val LimeGreenDk  = Color(0xFF458701)
 
@@ -50,7 +51,7 @@ object TrajectoryColors {
     val TextPrimary  = Color(0xFF1A1A2E)
     val TextSecondary= Color(0xFF6B7280)
     val TextMuted    = Color(0xFF9CA3AF)
-    val Divider      = Color(0xFFE5E7EB)
+    val Divider      = Color(0xFF8A53DE)
     val TaglineColor = Color(0xFF641CC4)
 
     // Semantic
@@ -67,7 +68,7 @@ object TrajectoryColors {
 private val LightColorScheme = lightColorScheme(
     // Primary — purple brand
     primary              = TrajectoryColors.Purple,
-    onPrimary            = Color.White,
+    onPrimary            = Color(0xFFF2E8FC),
     primaryContainer     = Color(0xFFEDD9FF),
     onPrimaryContainer   = Color(0xFF2D0060),
 
@@ -176,28 +177,28 @@ private val DarkColorScheme = darkColorScheme(
  * Build a full [Typography] scaled proportionally from [baseFontSize] (default 14sp).
  * All sizes are derived from the baseline so settings → font-size works app-wide.
  */
-fun dynamicTypography(baseFontSize: Int = 16): Typography {
+fun dynamicTypography(baseFontSize: Int = 14): Typography {
     val b = baseFontSize.toFloat()   // baseline body size
 
     return Typography(
 
         // ── Display — JetBrainsMono, for large numerical readouts ─────────
         displayLarge = TextStyle(
-            fontFamily    = premierfont,
+            fontFamily    = TrajectoryTyp.premierfont,
             fontWeight    = FontWeight.Bold,
             fontSize      = (b * 6.57f).sp,   // ~64sp @ 14
             lineHeight    = (b * 5.14f).sp,
             letterSpacing = (-0.5).sp
         ),
         displayMedium = TextStyle(
-            fontFamily    = premierfont,
-            fontWeight    = FontWeight.Normal,
-            fontSize      = (b * 3.29f).sp,   // ~46sp @ 14
+            fontFamily    = TrajectoryTyp.premierfont,
+            fontWeight    = FontWeight.Medium,
+            fontSize      = (24).sp,   // ~46sp @ 14
             lineHeight    = (b * 3.86f).sp,
             letterSpacing = (-0.25).sp
         ),
         displaySmall = TextStyle(
-            fontFamily    = premierfont,
+            fontFamily    = TrajectoryTyp.premierfont,
             fontWeight    = FontWeight.Normal,
             fontSize      = (b * 2.57f).sp,   // ~36sp @ 14
             lineHeight    = (b * 3.14f).sp,
@@ -206,21 +207,21 @@ fun dynamicTypography(baseFontSize: Int = 16): Typography {
 
         // ── Headline — Google Sans Bold, for screen & card headings ───────
         headlineLarge = TextStyle(
-            fontFamily    = secondaryfont,
+            fontFamily    = TrajectoryTyp.secondaryfont,
             fontWeight    = FontWeight.Bold,
             fontSize      = (b * 2.29f).sp,   // ~32sp @ 14
             lineHeight    = (b * 2.86f).sp,
             letterSpacing = (-0.25).sp
         ),
         headlineMedium = TextStyle(
-            fontFamily    = secondaryfont,
+            fontFamily    = TrajectoryTyp.secondaryfont,
             fontWeight    = FontWeight.Bold,
             fontSize      = (b * 2.0f).sp,    // ~28sp @ 14
             lineHeight    = (b * 2.57f).sp,
             letterSpacing = 0.sp
         ),
         headlineSmall = TextStyle(
-            fontFamily    = secondaryfont,
+            fontFamily    = TrajectoryTyp.secondaryfont,
             fontWeight    = FontWeight.Medium,
             fontSize      = (b * 1.71f).sp,   // ~24sp @ 14
             lineHeight    = (b * 2.29f).sp,
@@ -229,21 +230,21 @@ fun dynamicTypography(baseFontSize: Int = 16): Typography {
 
         // ── Title — Google Sans, for panel/dialog titles and tabs ─────────
         titleLarge = TextStyle(
-            fontFamily    = secondaryfont,
+            fontFamily    = TrajectoryTyp.secondaryfont,
             fontWeight    = FontWeight.Bold,
             fontSize      = (b * 1.57f).sp,   // ~22sp @ 14
             lineHeight    = (b * 2.0f).sp,
             letterSpacing = 0.sp
         ),
         titleMedium = TextStyle(
-            fontFamily    = secondaryfont,
+            fontFamily    = TrajectoryTyp.secondaryfont,
             fontWeight    = FontWeight.Medium,
             fontSize      = (b * 1.14f).sp,   // ~16sp @ 14
             lineHeight    = (b * 1.71f).sp,
             letterSpacing = 0.15.sp
         ),
         titleSmall = TextStyle(
-            fontFamily    = secondaryfont,
+            fontFamily    = TrajectoryTyp.secondaryfont,
             fontWeight    = FontWeight.Medium,
             fontSize      = (b * 1.0f).sp,    // ~14sp @ 14  (sidebar section labels)
             lineHeight    = (b * 1.43f).sp,
@@ -252,21 +253,21 @@ fun dynamicTypography(baseFontSize: Int = 16): Typography {
 
         // ── Body — Google Sans, main readable content ─────────────────────
         bodyLarge = TextStyle(
-            fontFamily    = secondaryfont,
+            fontFamily    = TrajectoryTyp.secondaryfont,
             fontWeight    = FontWeight.Normal,
             fontSize      = (b * 1.14f).sp,   // ~16sp @ 14
             lineHeight    = (b * 1.71f).sp,
             letterSpacing = 0.5.sp
         ),
         bodyMedium = TextStyle(
-            fontFamily    = secondaryfont,
+            fontFamily    = TrajectoryTyp.secondaryfont,
             fontWeight    = FontWeight.Normal,
             fontSize      = b.sp,             // exactly baseFontSize
             lineHeight    = (b * 1.43f).sp,
             letterSpacing = 0.25.sp
         ),
         bodySmall = TextStyle(
-            fontFamily    = secondaryfont,
+            fontFamily    = TrajectoryTyp.secondaryfont,
             fontWeight    = FontWeight.Light,
             fontSize      = (b * 0.86f).sp,   // ~12sp @ 14
             lineHeight    = (b * 1.29f).sp,
@@ -276,22 +277,22 @@ fun dynamicTypography(baseFontSize: Int = 16): Typography {
 
         // ── Label — JetBrainsMono for interactive elements & captions ─────
         labelLarge = TextStyle(
-            fontFamily    = welledge,
+            fontFamily    = TrajectoryTyp.welledge,
             fontWeight    = FontWeight.Bold,
             fontSize      = (b * 1.0f).sp,    // ~14sp @ 14  (buttons, chips)
             lineHeight    = (b * 1.43f).sp,
             letterSpacing = 0.1.sp
         ),
         labelMedium = TextStyle(
-            fontFamily    = premierfont,
-            fontWeight    = FontWeight.Normal,
+            fontFamily    = TrajectoryTyp.secondaryfont,
+            fontWeight    = FontWeight.Light,
             fontSize      = (b * 0.86f).sp,   // ~12sp @ 14  (units, tags)
             lineHeight    = (b * 1.14f).sp,
             letterSpacing = 0.5.sp
         ),
         labelSmall = TextStyle(
-            fontFamily    = secondaryfont,
-            fontWeight    = FontWeight.Normal,
+            fontFamily    = TrajectoryTyp.secondaryfont,
+            fontWeight    = FontWeight.Light,
             fontSize      = (b * 0.71f).sp,   // ~10sp @ 14  (captions, timestamps)
             lineHeight    = (b * 1.14f).sp,
             letterSpacing = 0.5.sp

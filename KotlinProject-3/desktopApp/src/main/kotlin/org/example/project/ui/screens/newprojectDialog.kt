@@ -1,5 +1,6 @@
 package ui.screens
 
+import Dialogwind
 import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -70,16 +71,7 @@ fun NewProjectDialog(
         return !nameError && !locationError
     }
 
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Surface(
-            modifier = Modifier.width(520.dp),
-            shape = RoundedCornerShape(16.dp),
-            color = Color.White,
-            tonalElevation = 8.dp
-        ) {
+    Dialogwind( transpearence = 0.75f, 750.dp , 600.dp , modifier = Modifier ,onDismiss = onDismiss  ) {
             Column(modifier = Modifier.padding(32.dp)) {
 
                 // ── Title ─────────────────────────────────────
@@ -223,15 +215,15 @@ fun NewProjectDialog(
                             colors = SliderDefaults.colors(
                                 thumbColor = TrajectoryColors.Purple,
                                 activeTrackColor = TrajectoryColors.Purple,
-                                inactiveTrackColor = org.example.project.ui.them.TrajectoryColors.Divider
+                                inactiveTrackColor =  TrajectoryColors.Divider
                             )
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("1 min", fontSize = 11.sp, color = org.example.project.ui.them.TrajectoryColors.TextMuted)
-                            Text("30 min", fontSize = 11.sp, color = org.example.project.ui.them.TrajectoryColors.TextMuted)
+                            Text("1 min", fontSize = 11.sp, color =  TrajectoryColors.TextMuted)
+                            Text("30 min", fontSize = 11.sp, color =  TrajectoryColors.TextMuted)
                         }
                     }
                 }
@@ -244,7 +236,7 @@ fun NewProjectDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("Cancel", color = org.example.project.ui.them.TrajectoryColors.TextSecondary)
+                        Text("Cancel", color =  TrajectoryColors.TextSecondary)
                     }
                     Spacer(Modifier.width(8.dp))
                     Button(
@@ -262,7 +254,7 @@ fun NewProjectDialog(
                             }
                         },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = org.example.project.ui.them.TrajectoryColors.Purple
+                            containerColor =  TrajectoryColors.Purple
                         ),
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.height(44.dp).widthIn(min = 120.dp)
@@ -277,7 +269,7 @@ fun NewProjectDialog(
             }
         }
     }
-}
+
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -287,15 +279,15 @@ private fun DialogLabel(text: String) {
         text = text,
         fontSize = 13.sp,
         fontWeight = FontWeight.Medium,
-        color = org.example.project.ui.them.TrajectoryColors.TextSecondary,
+        color =  TrajectoryColors.TextSecondary,
         modifier = Modifier.padding(bottom = 6.dp)
     )
 }
 
 @Composable
 private fun dialogFieldColors() = OutlinedTextFieldDefaults.colors(
-    unfocusedBorderColor = org.example.project.ui.them.TrajectoryColors.Divider,
-    focusedBorderColor   = org.example.project.ui.them.TrajectoryColors.Purple,
+    unfocusedBorderColor =  TrajectoryColors.Divider,
+    focusedBorderColor   =  TrajectoryColors.Purple,
     unfocusedContainerColor = Color(0xFFFAFAFA),
     focusedContainerColor   = Color.White
 )
