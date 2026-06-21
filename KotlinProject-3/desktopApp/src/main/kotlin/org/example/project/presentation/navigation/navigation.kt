@@ -10,6 +10,7 @@ import org.example.project.domain.repositories.TrajectoryRepository
 import org.example.project.presentation.ui.screens.RecentProject
 import org.example.project.presentation.ui.screens.StartPage
 import ui.screens.NewProjectConfig
+import ui.screens.NewProjectDialog
 
 @Composable
 fun Navigation(
@@ -18,6 +19,7 @@ fun Navigation(
 ) {
     var currentScreen by remember { mutableStateOf<Screen>(Screen.Start) }
     var projectConfig by remember { mutableStateOf<NewProjectConfig?>(null) }
+    var showNewProjectDialog by remember { mutableStateOf(false) }
 
     // Sample projects for demo
     val sampleProjects = listOf(
@@ -29,10 +31,10 @@ fun Navigation(
     when (currentScreen) {
         is Screen.Start -> {
             StartPage(
-                Dialogblure = 0.dp,
+                Dialogblure = if (showNewProjectDialog) 10.dp else 0.dp,
                 recentProjects = sampleProjects,
                 onNewProject = {
-                    // Handle new project creation
+                    showNewProjectDialog = true
                 },
                 onOpenProject = {
                     // Handle opening project
@@ -50,6 +52,19 @@ fun Navigation(
                 onSearch = { /* Handle search */ },
                 onInfoRequest = { /* Show info dialog */ }
             )
+
+            // Show New Project Dialog
+            if (showNewProjectDialog) {
+                NewProjectDialog(
+                    onDismiss = {
+                        showNewProjectDialog = false
+                    },
+                    onCreate = { config ->
+                        showNewProjectDialog = false
+                        currentScreen = Screen.Workspace(config)
+                    }
+                )
+            }
         }
         is Screen.Workspace -> {
             val viewModel = AppModule.provideHomeViewModel()
