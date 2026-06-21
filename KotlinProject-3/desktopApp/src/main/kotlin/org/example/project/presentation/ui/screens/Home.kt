@@ -1,11 +1,10 @@
-// Home.kt - Fixed version
 package org.example.project
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -13,167 +12,162 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import data.models.ProjectileData
-import org.example.project.presentation.ui.them.TrajectoryTheme
-import presentation.components.EnvironmentSection
-import presentation.components.ErrorMessage
-import presentation.components.HomeHeader
-import presentation.components.LoadingIndicator
-import presentation.components.ProjectileSection
-import presentation.components.TrajectoryResults
+import org.example.project.domain.repositories.AppSettings
+import org.example.project.presentation.ui.them.TrajectoryColors
 import presentation.viewmodels.HomeViewModel
 import ui.screens.*
 
-// In Home.kt or a new file like utils/ColorUtils.kt
-
-import androidx.compose.ui.graphics.Color
-import org.example.project.domain.Projectile
-import org.example.project.presentation.ui.them.TrajectoryColors
-
-// Helper function to convert domain Projectile to Color
-fun projectileColor(projectile: Projectile): Color {
-    return when (projectile.material.lowercase()) {
-        "steel" -> Color(0xFF7B8D9E)
-        "aluminum" -> Color(0xFFC0C0C0)
-        "copper" -> Color(0xFFB87333)
-        "lead" -> Color(0xFF434B4D)
-        "titanium" -> Color(0xFF8A8F9A)
-        "tungsten" -> Color(0xFF4F5B62)
-        "gold" -> Color(0xFFFFD700)
-        "silver" -> Color(0xFFC0C0C0)
-        "iron" -> Color(0xFF434B4D)
-        "brass" -> Color(0xFFB5A642)
-        "plastic" -> Color(0xFF4CAF50)
-        "wood" -> Color(0xFF8D6E63)
-        "glass" -> Color(0xFF90CAF9)
-        "rubber" -> Color(0xFF424242)
-        "ceramic" -> Color(0xFFE8E8E8)
-        "composite" -> Color(0xFF2E2E2E)
-        else -> TrajectoryColors.Purple
-    }
-}
 // ── Tab definitions ────────────────────────────────────────────
 enum class AppTab(val label: String) {
     HOME("Home"),
+    PROJECTILE("Projectile Info"),
     SIM_2D("2D Simulation"),
     SIM_3D("3D Simulation"),
-    PROJECTILE("Projectile info"),
     DATA("Data"),
     EXPORT("Export")
 }
 
-// ── Sidebar items (per tab — extend later) ─────────────────────
-data class SidebarItem(val label: String, val icon: ImageVector)
+// ── Sidebar items ──────────────────────────────────────────────
+data class SidebarItem(val label: String)
 
 fun sidebarItemsFor(tab: AppTab): List<SidebarItem> = when (tab) {
     AppTab.HOME -> listOf(
-        SidebarItem("Overview", Icons.Default.Dashboard),
-        SidebarItem("Notes", Icons.Default.EditNote),
-        SidebarItem("History", Icons.Default.History)
+        SidebarItem("Overview"),
+        SidebarItem("Notes"),
+        SidebarItem("History")
     )
     AppTab.PROJECTILE -> listOf(
-        SidebarItem("Parameters", Icons.Default.Tune),
-        SidebarItem("Materials", Icons.Default.Layers),
-        SidebarItem("Presets", Icons.Default.BookmarkBorder)
+        SidebarItem("Parameters"),
+        SidebarItem("Materials"),
+        SidebarItem("Presets")
     )
     AppTab.SIM_2D -> listOf(
-        SidebarItem("Controls", Icons.Default.PlayArrow),
-        SidebarItem("Overlay", Icons.Default.Layers),
-        SidebarItem("Markers", Icons.Default.Place)
+        SidebarItem("Controls"),
+        SidebarItem("Overlay"),
+        SidebarItem("Markers")
     )
     AppTab.SIM_3D -> listOf(
-        SidebarItem("Camera", Icons.Default.Videocam),
-        SidebarItem("Controls", Icons.Default.PlayArrow),
-        SidebarItem("Environment", Icons.Default.Public)
+        SidebarItem("Camera"),
+        SidebarItem("Controls"),
+        SidebarItem("Environment")
     )
     AppTab.DATA -> listOf(
-        SidebarItem("Filter", Icons.Default.FilterList),
-        SidebarItem("Sort", Icons.Default.Sort),
-        SidebarItem("Columns", Icons.Default.ViewColumn)
+        SidebarItem("Filter"),
+        SidebarItem("Sort"),
+        SidebarItem("Columns")
     )
     AppTab.EXPORT -> listOf(
-        SidebarItem("Format", Icons.Default.Description),
-        SidebarItem("Range", Icons.Default.DateRange),
-        SidebarItem("Options", Icons.Default.Settings)
+        SidebarItem("Format"),
+        SidebarItem("Range"),
+        SidebarItem("Options")
     )
 }
 
-// ── Settings state ─────────────────────────────────────────────
-data class AppSettings(
-    val projectName: String = "Untitled Project",
-    val backupIntervalMinutes: Int = 10,
-    val darkMode: Boolean = false,
-    val language: String = "English",
-    val fontSize: Int = 14,
-    val reportAuthorName: String = "",
-    val reportCompany: String = "",
-    val reportLogoPath: String = "",
-    val reportDepartment: String = "",
-    val reportContact: String = "",
-    val reportFootnote: String = ""
-)
-
-// ── Main home/workspace composable ────────────────────────────
+// ── Main HomeScreen ────────────────────────────────────────────
 @Composable
 fun HomeScreen(
-    viewModel: HomeViewModel,  // Changed: now accepts viewModel as parameter
-    projectConfig: NewProjectConfig? = null  // Added: optional project config
+    viewModel: HomeViewModel,
+    projectConfig: NewProjectConfig? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var selectedTab by remember { mutableStateOf(AppTab.HOME) }
+    var isSidebarExpanded by remember { mutableStateOf(false) }
+    var showSettingsDialog by remember { mutableStateOf(false) }
 
-    Column(
+    Row(
         modifier = Modifier.fillMaxSize()
     ) {
-        // Header with project name
-        HomeHeader(
-            projectile = viewModel.projectile,
-            projectName = projectConfig?.name ?: "Untitled Project",
-            onProjectileUpdate = viewModel::updateProjectile
+        // ── Collapsible Sidebar ──────────────────────────────
+        CollapsibleSidebar(
+            expanded = isSidebarExpanded,
+            onExpand = { isSidebarExpanded = true },
+            onCollapse = { isSidebarExpanded = false },
+            items = sidebarItemsFor(selectedTab),
+            onNewProject = { /* Handle new project */ },
+            onOpenProject = { /* Handle open project */ },
+            onSaveProject = { /* Handle save */ },
+            onCloseProject = { /* Handle close */ },
+            onOpenSettings = { showSettingsDialog = true }
         )
 
-        // Projectile Section
-        ProjectileSection(
-            projectile = viewModel.projectile,
-            isExpanded = viewModel.isProjectileExpanded,
-            onToggle = viewModel::toggleProjectileExpanded,
-            onUpdate = viewModel::updateProjectile
-        )
-
-        // Environment Section
-        EnvironmentSection(
-            environment = viewModel.environment,
-            isExpanded = viewModel.isEnvironmentExpanded,
-            onToggle = viewModel::toggleEnvironmentExpanded,
-            onUpdate = viewModel::updateEnvironment
-        )
-
-        // Results
-        if (uiState.isLoading) {
-            LoadingIndicator()
-        }
-
-        uiState.trajectory?.let { trajectory ->
-            TrajectoryResults(
-                trajectory = trajectory,
-                onExport = { /* Handle export */ }
+        // ── Main Content ──────────────────────────────────────
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+        ) {
+            // Top Bar
+            TopTabBar(
+                selectedTab = selectedTab,
+                projectName = projectConfig?.name ?: "Untitled Project",
+                onTabSelected = { selectedTab = it }
             )
-        }
 
-        uiState.error?.let { error ->
-            ErrorMessage(error)
+            // Content Area - Using existing screen components
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
+                AnimatedContent(
+                    targetState = selectedTab,
+                    transitionSpec = {
+                        fadeIn(animationSpec = tween(200)) togetherWith
+                                fadeOut(animationSpec = tween(200))
+                    }
+                ) { tab ->
+                    when (tab) {
+                        AppTab.HOME -> {
+                            // Use existing HomeContent from ui.screens
+                            HomeContent(viewModel)
+                        }
+                        AppTab.PROJECTILE -> {
+                            // Use existing ProjectileCharacteristicsScreen
+                            ProjectileCharacteristicsScreen(viewModel)
+                        }
+                        AppTab.SIM_2D -> {
+                            // Use existing TwoDSimulationScreen
+                            TwoDSimulationScreen(
+                                projectile = viewModel.projectile,
+                                environment = viewModel.environment
+                            )
+                        }
+                        AppTab.SIM_3D -> {
+                            // Use existing ThreeDSimulationScreen
+                            ThreeDSimulationScreen(viewModel)
+                        }
+                        AppTab.DATA -> {
+                            // Use existing DataScreen
+                            DataScreen()
+                        }
+                        AppTab.EXPORT -> {
+                            // Use existing ExportScreen
+                            ExportScreen()
+                        }
+                    }
+                }
+            }
         }
+    }
+
+    // ── Settings Dialog ──────────────────────────────────────
+    // In Home.kt - Update the SettingsDialog call
+    if (showSettingsDialog) {
+        SettingsDialog(
+            settings = AppSettings(),
+            onChange = { newSettings ->
+                // Apply settings
+                showSettingsDialog = false
+            },
+            onDismiss = { showSettingsDialog = false }
+        )
     }
 }
 
@@ -185,9 +179,11 @@ fun TopTabBar(
     onTabSelected: (AppTab) -> Unit
 ) {
     Surface(
-        color = Color.White,
-        shadowElevation = 1.dp,
-        modifier = Modifier.fillMaxWidth()
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 4.dp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(2.dp)
     ) {
         Column {
             // Project name strip
@@ -214,37 +210,27 @@ fun TopTabBar(
                         modifier = Modifier.size(8.dp)
                     )
                     Spacer(Modifier.width(4.dp))
-                    Text("Saved", fontSize = 11.sp, color = Color.White.copy(alpha = 0.7f))
+                    Text(
+                        "Saved",
+                        fontSize = 11.sp,
+                        color = Color.White.copy(alpha = 0.7f)
+                    )
                 }
             }
 
+            // Tabs
             Row(
                 modifier = Modifier
-                    .padding(horizontal = 8.dp)
-                    .fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Text(
-                    text = selectedTab.label,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TrajectoryColors.Purple,
-                    fontFamily = FontFamily.Monospace
-                )
-
-                // Tabs row
-                Row(
-                    modifier = Modifier.padding(horizontal = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    AppTab.entries.forEach { tab ->
-                        TabItem(
-                            tab = tab,
-                            selected = tab == selectedTab,
-                            onClick = { onTabSelected(tab) }
-                        )
-                    }
+                AppTab.values().forEach { tab ->
+                    TabItem(
+                        tab = tab,
+                        selected = tab == selectedTab,
+                        onClick = { onTabSelected(tab) }
+                    )
                 }
             }
         }
@@ -253,36 +239,39 @@ fun TopTabBar(
 
 @Composable
 fun TabItem(tab: AppTab, selected: Boolean, onClick: () -> Unit) {
-    val contentColor = if (selected) TrajectoryColors.Purple else TrajectoryColors.TextSecondary
+    val backgroundColor = if (selected) TrajectoryColors.Purple.copy(alpha = 0.1f)
+    else Color.Transparent
+    val contentColor = if (selected) TrajectoryColors.Purple
+    else MaterialTheme.colorScheme.onSurfaceVariant
 
     Column(
         modifier = Modifier
             .clickable(onClick = onClick)
-            .padding(horizontal = 4.dp),
+            .background(backgroundColor, RoundedCornerShape(8.dp))
+            .padding(vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
         ) {
-            Spacer(Modifier.width(6.dp))
+
+            Spacer(Modifier.width(4.dp))
             Text(
                 text = tab.label,
-                fontSize = 13.sp,
-                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                fontSize = 12.sp,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
                 color = contentColor
             )
         }
-        // Active indicator bar
-        Box(
-            modifier = Modifier
-                .height(2.dp)
-                .width(if (selected) 60.dp else 0.dp)
-                .background(
-                    color = if (selected) TrajectoryColors.Purple else Color.Transparent,
-                    shape = RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp)
-                )
-        )
+        if (selected) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(0.3f)
+                    .height(2.dp)
+                    .background(TrajectoryColors.Purple, RoundedCornerShape(2.dp))
+            )
+        }
     }
 }
 
@@ -312,27 +301,21 @@ fun CollapsibleSidebar(
 
         AnimatedVisibility(
             visible = expanded,
-            enter = slideInHorizontally(initialOffsetX = { -it }, animationSpec = tween(200)) + fadeIn(tween(150)),
-            exit = slideOutHorizontally(targetOffsetX = { -it }, animationSpec = tween(180)) + fadeOut(tween(120))
+            enter = slideInHorizontally(
+                initialOffsetX = { -it },
+                animationSpec = tween(200)
+            ) + fadeIn(tween(150)),
+            exit = slideOutHorizontally(
+                targetOffsetX = { -it },
+                animationSpec = tween(180)
+            ) + fadeOut(tween(120))
         ) {
             Surface(
                 modifier = Modifier
                     .fillMaxHeight()
-                    .width(220.dp)
-                    .pointerInput(Unit) {
-                        awaitPointerEventScope {
-                            while (true) {
-                                val event = awaitPointerEvent()
-                                val inBounds = event.changes.any { c ->
-                                    c.position.x in 0f..size.width.toFloat() &&
-                                            c.position.y in 0f..size.height.toFloat()
-                                }
-                                if (!inBounds) onCollapse()
-                            }
-                        }
-                    },
-                color = Color.White,
-                shadowElevation = 6.dp
+                    .width(220.dp),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 8.dp
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     // Header
@@ -351,7 +334,10 @@ fun CollapsibleSidebar(
                             color = Color.White,
                             fontFamily = FontFamily.Monospace
                         )
-                        IconButton(onClick = onCollapse, modifier = Modifier.size(24.dp)) {
+                        IconButton(
+                            onClick = onCollapse,
+                            modifier = Modifier.size(24.dp)
+                        ) {
                             Icon(
                                 Icons.Default.ChevronLeft,
                                 contentDescription = "Collapse",
@@ -369,7 +355,9 @@ fun CollapsibleSidebar(
                             .padding(vertical = 8.dp)
                     ) {
                         SidebarSectionLabel("Current View")
-                        items.forEach { item -> SidebarRow(item = item) }
+                        items.forEach { item ->
+                            SidebarRow(item = item)
+                        }
                     }
 
                     // BOTTOM ZONE: Persistent actions
@@ -381,10 +369,27 @@ fun CollapsibleSidebar(
                             .padding(bottom = 4.dp)
                     ) {
                         SidebarSectionLabel("Project")
-                        SidebarActionRow("New Project", Icons.Default.CreateNewFolder, onNewProject)
-                        SidebarActionRow("Open Project", Icons.Default.FolderOpen, onOpenProject)
-                        SidebarActionRow("Save", Icons.Default.Save, onSaveProject)
-                        SidebarActionRow("Close Project", Icons.Default.Close, onCloseProject, Color(0xFFDC2626))
+                        SidebarActionRow(
+                            "New Project",
+                            Icons.Default.CreateNewFolder,
+                            onNewProject
+                        )
+                        SidebarActionRow(
+                            "Open Project",
+                            Icons.Default.FolderOpen,
+                            onOpenProject
+                        )
+                        SidebarActionRow(
+                            "Save",
+                            Icons.Default.Save,
+                            onSaveProject
+                        )
+                        SidebarActionRow(
+                            "Close Project",
+                            Icons.Default.Close,
+                            onCloseProject,
+                            Color(0xFFDC2626)
+                        )
 
                         HorizontalDivider(
                             color = TrajectoryColors.Divider,
@@ -450,12 +455,7 @@ fun SidebarRow(item: SidebarItem) {
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(
-            imageVector = item.icon,
-            contentDescription = item.label,
-            tint = TrajectoryColors.Purple,
-            modifier = Modifier.size(18.dp)
-        )
+
         Spacer(Modifier.width(10.dp))
         Text(item.label, fontSize = 13.sp, color = TrajectoryColors.TextPrimary)
     }
@@ -486,43 +486,4 @@ private fun SidebarActionRow(
     }
 }
 
-// Helper function to convert RGB Ints to Color
-// In Home.kt - Update the projectileColor function
-// Helper function to convert domain Projectile to Color
-
-
-// ── Main Content Area ──────────────────────────────────────────
-@Composable
-fun MainContentArea(
-    tab: AppTab,
-    homeViewModel: HomeViewModel,
-) {
-    when (tab) {
-        AppTab.HOME -> {
-            HomeContent(homeViewModel)
-        }
-        AppTab.PROJECTILE -> {
-            ProjectileCharacteristicsScreen(homeViewModel)
-        }
-        AppTab.SIM_2D -> {
-            TwoDSimulationScreen(
-                projectile = homeViewModel.projectile,
-                environment = homeViewModel.environment
-            )
-        }
-        AppTab.SIM_3D -> {
-            ThreeDSimulationScreen(homeViewModel)
-        }
-        AppTab.DATA -> {
-            DataScreen()
-        }
-        AppTab.EXPORT -> {
-            ExportScreen()
-        }
-    }
-}
-
-// ── Remaining helper functions ────────────────────────────────
-// (ProjectileOverviewSection, EnvironmentParametersSection,
-//  MathematicalExpressionsSection, ParameterRow, DerivedPropertyRow,
-//  PresetButton remain the same as in your original file)
+// ── Missing Imports ─────────────────────────────────────────────

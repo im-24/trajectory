@@ -1,12 +1,12 @@
 // ui/screens/SettingsDialog.kt
 package ui.screens
 
-import org.example.project.LocalAppSettings
-import org.example.project.LocalOnSettingsChange
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -22,7 +22,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import org.example.project.AppSettings
+import org.example.project.LocalAppSettings
+import org.example.project.LocalOnSettingsChange
+import org.example.project.domain.repositories.AppSettings
 import org.example.project.presentation.ui.them.TrajectoryColors
 import javax.swing.JFileChooser
 import javax.swing.filechooser.FileNameExtensionFilter
@@ -31,7 +33,7 @@ import javax.swing.filechooser.FileNameExtensionFilter
 @Composable
 fun SettingsDialog(
     settings: AppSettings,
-    onChange:  (AppSettings) -> Unit,
+    onChange: (AppSettings) -> Unit,
     onDismiss: () -> Unit
 ) {
     val onSettingsChange = LocalOnSettingsChange.current
@@ -45,14 +47,14 @@ fun SettingsDialog(
         // Only propagate appearance changes immediately for live preview;
         // project/export fields are committed only on Save.
         onSettingsChange(new.copy(
-            projectName            = settings.projectName,
-            backupIntervalMinutes  = settings.backupIntervalMinutes,
-            reportAuthorName       = settings.reportAuthorName,
-            reportCompany          = settings.reportCompany,
-            reportLogoPath         = settings.reportLogoPath,
-            reportDepartment       = settings.reportDepartment,
-            reportContact          = settings.reportContact,
-            reportFootnote         = settings.reportFootnote
+            projectName = settings.projectName,
+            backupIntervalMinutes = settings.backupIntervalMinutes,
+            reportAuthorName = settings.reportAuthorName,
+            reportCompany = settings.reportCompany,
+            reportLogoPath = settings.reportLogoPath,
+            reportDepartment = settings.reportDepartment,
+            reportContact = settings.reportContact,
+            reportFootnote = settings.reportFootnote
         ))
     }
 
@@ -72,8 +74,8 @@ fun SettingsDialog(
             modifier = Modifier
                 .width(640.dp)
                 .heightIn(min = 480.dp, max = 680.dp),
-            shape  = RoundedCornerShape(16.dp),
-            color  = Color.White,
+            shape = RoundedCornerShape(16.dp),
+            color = Color.White,
             tonalElevation = 8.dp
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
@@ -112,9 +114,9 @@ fun SettingsDialog(
                         .padding(horizontal = 24.dp, vertical = 14.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    SettingsTabPill("Project",  Icons.Default.Folder,      0, selectedTab) { selectedTab = it }
-                    SettingsTabPill("General",  Icons.Default.Tune,         1, selectedTab) { selectedTab = it }
-                    SettingsTabPill("Export",   Icons.Default.Description,  2, selectedTab) { selectedTab = it }
+                    SettingsTabPill("Project", Icons.Default.Folder, 0, selectedTab) { selectedTab = it }
+                    SettingsTabPill("General", Icons.Default.Tune, 1, selectedTab) { selectedTab = it }
+                    SettingsTabPill("Export", Icons.Default.Description, 2, selectedTab) { selectedTab = it }
                 }
 
                 HorizontalDivider(color = TrajectoryColors.Divider)
@@ -128,9 +130,9 @@ fun SettingsDialog(
                         .padding(24.dp)
                 ) {
                     when (selectedTab) {
-                        0 -> ProjectSettingsTab(draft)    { updateDraft(it) }
-                        1 -> GeneralSettingsTab(draft)    { updateDraft(it) }
-                        2 -> ExportSettingsTab(draft)     { draft = it }   // export fields: no live preview needed
+                        0 -> ProjectSettingsTab(draft) { updateDraft(it) }
+                        1 -> GeneralSettingsTab(draft) { updateDraft(it) }
+                        2 -> ExportSettingsTab(draft) { draft = it }
                     }
                 }
 
@@ -149,8 +151,9 @@ fun SettingsDialog(
                     }
                     Spacer(Modifier.width(8.dp))
                     Button(
-                        onClick = { onChange(draft); onDismiss() },                        colors  = ButtonDefaults.buttonColors(containerColor = TrajectoryColors.Purple),
-                        shape   = RoundedCornerShape(10.dp),
+                        onClick = { onChange(draft); onDismiss() },
+                        colors = ButtonDefaults.buttonColors(containerColor = TrajectoryColors.Purple),
+                        shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.height(40.dp).widthIn(min = 110.dp)
                     ) {
                         Icon(Icons.Default.Check, null, modifier = Modifier.size(16.dp))
@@ -170,10 +173,10 @@ private fun ProjectSettingsTab(s: AppSettings, onChange: (AppSettings) -> Unit) 
 
         SettingsGroup("Project Identity") {
             SettingsTextField(
-                label       = "Project Name",
-                value       = s.projectName,
+                label = "Project Name",
+                value = s.projectName,
                 placeholder = "e.g. Ballistic Test Alpha",
-                icon        = Icons.Default.Label,
+                icon = Icons.Default.Label,
                 onValueChange = { onChange(s.copy(projectName = it)) }
             )
         }
@@ -201,12 +204,12 @@ private fun ProjectSettingsTab(s: AppSettings, onChange: (AppSettings) -> Unit) 
                     )
                 }
                 Slider(
-                    value         = s.backupIntervalMinutes.toFloat(),
+                    value = s.backupIntervalMinutes.toFloat(),
                     onValueChange = { onChange(s.copy(backupIntervalMinutes = it.toInt())) },
-                    valueRange    = 1f..60f,
-                    steps         = 58,
-                    colors        = SliderDefaults.colors(
-                        thumbColor       = TrajectoryColors.Purple,
+                    valueRange = 1f..60f,
+                    steps = 58,
+                    colors = SliderDefaults.colors(
+                        thumbColor = TrajectoryColors.Purple,
                         activeTrackColor = TrajectoryColors.Purple,
                         inactiveTrackColor = TrajectoryColors.Divider
                     )
@@ -215,7 +218,7 @@ private fun ProjectSettingsTab(s: AppSettings, onChange: (AppSettings) -> Unit) 
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("1 min",  fontSize = 11.sp, color = TrajectoryColors.TextMuted)
+                    Text("1 min", fontSize = 11.sp, color = TrajectoryColors.TextMuted)
                     Text("60 min", fontSize = 11.sp, color = TrajectoryColors.TextMuted)
                 }
             }
@@ -254,8 +257,8 @@ private fun GeneralSettingsTab(s: AppSettings, onChange: (AppSettings) -> Unit) 
                     checked = s.darkMode,
                     onCheckedChange = { onChange(s.copy(darkMode = it)) },
                     colors = SwitchDefaults.colors(
-                        checkedThumbColor  = Color.White,
-                        checkedTrackColor  = TrajectoryColors.Purple
+                        checkedThumbColor = Color.White,
+                        checkedTrackColor = TrajectoryColors.Purple
                     )
                 )
             }
@@ -285,13 +288,13 @@ private fun GeneralSettingsTab(s: AppSettings, onChange: (AppSettings) -> Unit) 
                     )
                 }
                 Slider(
-                    value         = s.fontSize.toFloat(),
+                    value = s.fontSize.toFloat(),
                     onValueChange = { onChange(s.copy(fontSize = it.toInt())) },
-                    valueRange    = 10f..24f,
-                    steps         = 13,
-                    colors        = SliderDefaults.colors(
-                        thumbColor         = TrajectoryColors.Purple,
-                        activeTrackColor   = TrajectoryColors.Purple,
+                    valueRange = 10f..24f,
+                    steps = 13,
+                    colors = SliderDefaults.colors(
+                        thumbColor = TrajectoryColors.Purple,
+                        activeTrackColor = TrajectoryColors.Purple,
                         inactiveTrackColor = TrajectoryColors.Divider
                     )
                 )
@@ -321,11 +324,11 @@ private fun GeneralSettingsTab(s: AppSettings, onChange: (AppSettings) -> Unit) 
                         val selected = s.language == lang
                         FilterChip(
                             selected = selected,
-                            onClick  = { onChange(s.copy(language = lang)) },
-                            label    = { Text(lang, fontSize = 12.sp) },
-                            colors   = FilterChipDefaults.filterChipColors(
+                            onClick = { onChange(s.copy(language = lang)) },
+                            label = { Text(lang, fontSize = 12.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = TrajectoryColors.Purple,
-                                selectedLabelColor     = Color.White
+                                selectedLabelColor = Color.White
                             )
                         )
                     }
@@ -376,7 +379,7 @@ private fun ExportSettingsTab(s: AppSettings, onChange: (AppSettings) -> Unit) {
                 label = "Author / Analyst Name",
                 value = s.reportAuthorName,
                 placeholder = "e.g. Dr. Ali Benali",
-                icon  = Icons.Default.Person,
+                icon = Icons.Default.Person,
                 onValueChange = { onChange(s.copy(reportAuthorName = it)) }
             )
             Spacer(Modifier.height(12.dp))
@@ -384,7 +387,7 @@ private fun ExportSettingsTab(s: AppSettings, onChange: (AppSettings) -> Unit) {
                 label = "Company / Institution",
                 value = s.reportCompany,
                 placeholder = "e.g. National Research Centre",
-                icon  = Icons.Default.Business,
+                icon = Icons.Default.Business,
                 onValueChange = { onChange(s.copy(reportCompany = it)) }
             )
             Spacer(Modifier.height(12.dp))
@@ -392,7 +395,7 @@ private fun ExportSettingsTab(s: AppSettings, onChange: (AppSettings) -> Unit) {
                 label = "Department",
                 value = s.reportDepartment,
                 placeholder = "e.g. Ballistics & Applied Physics",
-                icon  = Icons.Default.AccountTree,
+                icon = Icons.Default.AccountTree,
                 onValueChange = { onChange(s.copy(reportDepartment = it)) }
             )
             Spacer(Modifier.height(12.dp))
@@ -400,7 +403,7 @@ private fun ExportSettingsTab(s: AppSettings, onChange: (AppSettings) -> Unit) {
                 label = "Contact / Email",
                 value = s.reportContact,
                 placeholder = "e.g. analyst@example.org",
-                icon  = Icons.Default.Email,
+                icon = Icons.Default.Email,
                 onValueChange = { onChange(s.copy(reportContact = it)) }
             )
         }
@@ -425,12 +428,12 @@ private fun ExportSettingsTab(s: AppSettings, onChange: (AppSettings) -> Unit) {
                     shape = RoundedCornerShape(10.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         unfocusedBorderColor = TrajectoryColors.Divider,
-                        focusedBorderColor   = TrajectoryColors.Purple
+                        focusedBorderColor = TrajectoryColors.Purple
                     )
                 )
                 OutlinedButton(
                     onClick = ::pickLogo,
-                    shape  = RoundedCornerShape(10.dp),
+                    shape = RoundedCornerShape(10.dp),
                     border = BorderStroke(1.dp, TrajectoryColors.Purple),
                     modifier = Modifier.height(56.dp)
                 ) {
@@ -458,10 +461,10 @@ private fun ExportSettingsTab(s: AppSettings, onChange: (AppSettings) -> Unit) {
                 label = "Footer / Disclaimer text",
                 value = s.reportFootnote,
                 placeholder = "e.g. Confidential — for internal use only",
-                icon  = Icons.Default.Notes,
+                icon = Icons.Default.Notes,
                 onValueChange = { onChange(s.copy(reportFootnote = it)) },
                 singleLine = false,
-                minLines   = 2
+                minLines = 2
             )
         }
     }
@@ -471,9 +474,9 @@ private fun ExportSettingsTab(s: AppSettings, onChange: (AppSettings) -> Unit) {
 
 @Composable
 private fun SettingsTabPill(
-    label:    String,
-    icon:     ImageVector,
-    index:    Int,
+    label: String,
+    icon: ImageVector,
+    index: Int,
     selected: Int,
     onSelect: (Int) -> Unit
 ) {
@@ -502,7 +505,7 @@ private fun SettingsTabPill(
 
 @Composable
 private fun SettingsGroup(
-    title:   String,
+    title: String,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -516,7 +519,7 @@ private fun SettingsGroup(
         Spacer(Modifier.height(8.dp))
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape  = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(containerColor = Color(0xFFFAFAFB)),
             border = BorderStroke(1.dp, TrajectoryColors.Divider)
         ) {
@@ -529,34 +532,34 @@ private fun SettingsGroup(
 
 @Composable
 private fun SettingsTextField(
-    label:        String,
-    value:        String,
-    placeholder:  String,
-    icon:         ImageVector,
+    label: String,
+    value: String,
+    placeholder: String,
+    icon: ImageVector,
     onValueChange: (String) -> Unit,
-    singleLine:   Boolean = true,
-    minLines:     Int = 1
+    singleLine: Boolean = true,
+    minLines: Int = 1
 ) {
     Column {
         Text(label, fontSize = 12.sp, color = TrajectoryColors.TextSecondary,
             modifier = Modifier.padding(bottom = 5.dp))
         OutlinedTextField(
-            value          = value,
-            onValueChange  = onValueChange,
-            placeholder    = { Text(placeholder, color = TrajectoryColors.TextMuted, fontSize = 13.sp) },
-            leadingIcon    = {
+            value = value,
+            onValueChange = onValueChange,
+            placeholder = { Text(placeholder, color = TrajectoryColors.TextMuted, fontSize = 13.sp) },
+            leadingIcon = {
                 Icon(icon, null, tint = TrajectoryColors.Purple.copy(alpha = 0.6f),
                     modifier = Modifier.size(18.dp))
             },
-            modifier  = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             singleLine = singleLine,
-            minLines  = minLines,
-            shape     = RoundedCornerShape(10.dp),
-            colors    = OutlinedTextFieldDefaults.colors(
-                unfocusedBorderColor    = TrajectoryColors.Divider,
-                focusedBorderColor      = TrajectoryColors.Purple,
+            minLines = minLines,
+            shape = RoundedCornerShape(10.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedBorderColor = TrajectoryColors.Divider,
+                focusedBorderColor = TrajectoryColors.Purple,
                 unfocusedContainerColor = Color.White,
-                focusedContainerColor   = Color.White
+                focusedContainerColor = Color.White
             )
         )
     }

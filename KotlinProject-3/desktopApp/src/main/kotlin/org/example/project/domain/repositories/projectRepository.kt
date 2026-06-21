@@ -9,7 +9,19 @@ interface ProjectRepository {
     suspend fun delete(path: String): Result<Unit>
     suspend fun clearRecent(): Result<Unit>
 }
-
+data class AppSettings(
+    val projectName: String = "Untitled Project",
+    val backupIntervalMinutes: Int = 10,
+    val darkMode: Boolean = false,
+    val language: String = "English",
+    val fontSize: Int = 14,
+    val reportAuthorName: String = "",
+    val reportCompany: String = "",
+    val reportLogoPath: String = "",
+    val reportDepartment: String = "",
+    val reportContact: String = "",
+    val reportFootnote: String = ""
+)
 data class Project(
     val name: String,
     val location: String,

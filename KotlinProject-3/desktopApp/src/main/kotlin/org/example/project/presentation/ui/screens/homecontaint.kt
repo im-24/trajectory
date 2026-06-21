@@ -29,7 +29,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import data.models.DragModel
 import org.example.project.presentation.ui.them.TrajectoryColors
-import org.example.project.projectileColor
 import presentation.viewmodels.HomeViewModel
 
 @Composable
@@ -115,7 +114,7 @@ fun ProjectileOverviewSection(viewModel: HomeViewModel) {
                             .background(
                                 Brush.radialGradient(
                                     colors = listOf(
-                                        projectileColor(viewModel.projectile).copy(alpha = 0.3f),
+                                        TrajectoryColors.Purple.copy(alpha = 0.3f),
                                         TrajectoryColors.Background
                                     ),
                                     center = Offset(150f, 150f),
@@ -136,8 +135,8 @@ fun ProjectileOverviewSection(viewModel: HomeViewModel) {
                                     .background(
                                         Brush.radialGradient(
                                             colors = listOf(
-                                                projectileColor(viewModel.projectile),
-                                                projectileColor(viewModel.projectile).copy(alpha = 0.6f)
+                                                TrajectoryColors.Background.copy(alpha = 0.3f),
+                                                TrajectoryColors.LimeGreen.copy(alpha = 0.6f)
                                             ),
                                             radius = 80f
                                         )
