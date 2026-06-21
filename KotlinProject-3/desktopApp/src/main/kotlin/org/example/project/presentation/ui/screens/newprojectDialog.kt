@@ -1,9 +1,11 @@
 package ui.screens
 
 import Dialogwind
+import SecondaryButtonLarge
 import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -13,10 +15,12 @@ import androidx.compose.material.icons.filled.TableChart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
+import mainButtonLarge
 import org.example.project.presentation.ui.them.TrajectoryColors
 import java.io.File
 import javax.swing.JFileChooser
@@ -94,12 +98,12 @@ fun NewProjectDialog(
                 fontFamily = FontFamily.Monospace,
                 fontWeight = FontWeight.ExtraBold,
                 fontSize = 24.sp,
-                color = TrajectoryColors.TextPrimary
+                color = TrajectoryColors.LimeGreen
             )
             Text(
                 text = "Configure your project settings",
                 fontSize = 14.sp,
-                color = TrajectoryColors.TextMuted,
+                color = TrajectoryColors.Background,
                 modifier = Modifier.padding(top = 4.dp, bottom = 24.dp)
             )
 
@@ -110,13 +114,23 @@ fun NewProjectDialog(
                 onValueChange = { projectName = it; nameError = false },
                 placeholder = { Text("e.g. Ballistic Test Alpha", color = TrajectoryColors.TextMuted) },
                 isError = nameError,
+
                 supportingText = if (nameError) {
                     { Text("Name is required", color = MaterialTheme.colorScheme.error) }
                 } else null,
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                shape = RoundedCornerShape(10.dp),
-                colors = dialogFieldColors()
+                shape = CircleShape,
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedTextColor = TrajectoryColors.Background.copy(0.2f),
+                    focusedTextColor = TrajectoryColors.Background,
+                    unfocusedLeadingIconColor = TrajectoryColors.Background.copy(0.2f),
+                    focusedLeadingIconColor = TrajectoryColors.Background,
+                    unfocusedBorderColor = Color.Transparent,
+                    focusedBorderColor = TrajectoryColors.Background,
+                    unfocusedContainerColor = Color.Gray.copy(alpha = 0.25f),
+                    focusedContainerColor = Color.Gray.copy(alpha = 0.5f),
+                )
             )
 
             Spacer(Modifier.height(16.dp))
@@ -132,23 +146,27 @@ fun NewProjectDialog(
                     modifier = Modifier.weight(1f),
                     singleLine = true,
                     readOnly = true,
-                    shape = RoundedCornerShape(10.dp),
-                    colors = dialogFieldColors()
+                    shape = CircleShape,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedTextColor = TrajectoryColors.Background.copy(0.2f),
+                        focusedTextColor = TrajectoryColors.Background,
+                        unfocusedLeadingIconColor = TrajectoryColors.Background.copy(0.2f),
+                        focusedLeadingIconColor = TrajectoryColors.Background,
+                        unfocusedBorderColor = Color.Transparent,
+                        focusedBorderColor = TrajectoryColors.Background,
+                        unfocusedContainerColor = Color.Gray.copy(alpha = 0.25f),
+                        focusedContainerColor = Color.Gray.copy(alpha = 0.5f),
+                    )
                 )
                 Spacer(Modifier.width(8.dp))
-                OutlinedButton(
+                SecondaryButtonLarge (
                     onClick = ::pickFolder,
-                    shape = RoundedCornerShape(10.dp),
-                    border = BorderStroke(1.dp, TrajectoryColors.Purple),
+
                     modifier = Modifier.height(56.dp)
                 ) {
-                    Icon(
-                        Icons.Default.FolderOpen,
-                        contentDescription = null,
-                        tint = TrajectoryColors.Purple
-                    )
+
                     Spacer(Modifier.width(4.dp))
-                    Text("Browse", color = TrajectoryColors.Purple)
+                    Text("Browse", color = TrajectoryColors.Background)
                 }
             }
             if (locationError) {
@@ -172,23 +190,25 @@ fun NewProjectDialog(
                     modifier = Modifier.weight(1f),
                     singleLine = true,
                     readOnly = true,
-                    shape = RoundedCornerShape(10.dp),
-                    colors = dialogFieldColors()
-                )
+                    shape = CircleShape,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedTextColor = TrajectoryColors.Background.copy(0.2f),
+                        focusedTextColor = TrajectoryColors.Background,
+                        unfocusedLeadingIconColor = TrajectoryColors.Background.copy(0.2f),
+                        focusedLeadingIconColor = TrajectoryColors.Background,
+                        unfocusedBorderColor = Color.Transparent,
+                        focusedBorderColor = TrajectoryColors.Background,
+                        unfocusedContainerColor = Color.Gray.copy(alpha = 0.25f),
+                        focusedContainerColor = Color.Gray.copy(alpha = 0.5f),
+                    ))
                 Spacer(Modifier.width(8.dp))
-                OutlinedButton(
+                SecondaryButtonLarge(
                     onClick = ::pickExcelFile,
-                    shape = RoundedCornerShape(10.dp),
-                    border = BorderStroke(1.dp, TrajectoryColors.LimeGreen),
                     modifier = Modifier.height(56.dp)
                 ) {
-                    Icon(
-                        Icons.Default.TableChart,
-                        contentDescription = null,
-                        tint = TrajectoryColors.LimeGreen
-                    )
+
                     Spacer(Modifier.width(4.dp))
-                    Text("Import", color = TrajectoryColors.LimeGreen)
+                    Text("Import", color = TrajectoryColors.Background)
                 }
             }
 
@@ -243,10 +263,16 @@ fun NewProjectDialog(
                             trailingIcon = {
                                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = isAutoSaveDropdownExpanded)
                             },
-                            colors = ExposedDropdownMenuDefaults.textFieldColors(
-
-                                focusedContainerColor = Color.White,
-                                unfocusedContainerColor = Color.White
+                            shape = CircleShape,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                unfocusedTextColor = TrajectoryColors.Background.copy(0.2f),
+                                focusedTextColor = TrajectoryColors.Background,
+                                unfocusedLeadingIconColor = TrajectoryColors.Background.copy(0.2f),
+                                focusedLeadingIconColor = TrajectoryColors.Background,
+                                unfocusedBorderColor = Color.Transparent,
+                                focusedBorderColor = TrajectoryColors.Background,
+                                unfocusedContainerColor = Color.Gray.copy(alpha = 0.25f),
+                                focusedContainerColor = Color.Gray.copy(alpha = 0.5f),
                             ),
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -294,7 +320,7 @@ fun NewProjectDialog(
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                TextButton(
+                SecondaryButtonLarge(
                     onClick = onDismiss,
                     modifier = Modifier.height(44.dp)
                 ) {
@@ -308,7 +334,7 @@ fun NewProjectDialog(
 
                 Spacer(Modifier.width(12.dp))
 
-                Button(
+                mainButtonLarge (
                     onClick = {
                         if (validate()) {
                             onCreate(
@@ -322,25 +348,16 @@ fun NewProjectDialog(
                             )
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = TrajectoryColors.Purple
-                    ),
-                    shape = RoundedCornerShape(10.dp),
+
                     modifier = Modifier
                         .height(48.dp)
                         .widthIn(min = 140.dp)
                 ) {
-                    Icon(
-                        Icons.Default.CreateNewFolder,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
+
                     Spacer(Modifier.width(8.dp))
                     Text(
                         "Create Project",
-                        fontWeight = FontWeight.SemiBold,
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 14.sp
+
                     )
                 }
             }

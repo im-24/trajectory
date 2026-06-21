@@ -153,14 +153,14 @@ fun ProjectRow(project: RecentProject, onClick: () -> Unit) {
             .padding(horizontal = 32.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(project.name,            color = TrajectoryColors.TextSecondary,
+        Text(project.name,            color = TrajectoryColors.Background,
             modifier = Modifier.weight(2f), fontSize = 13.sp)
-        Text(project.lastOpened, modifier = Modifier.weight(2f), fontSize = 13.sp, color = TrajectoryColors.TextSecondary)
+        Text(project.lastOpened, modifier = Modifier.weight(2f), fontSize = 13.sp, color = TrajectoryColors.Background)
         Text(
             project.path,
             modifier = Modifier.weight(3f),
             fontSize = 13.sp,
-            color = TrajectoryColors.TextSecondary,
+            color = TrajectoryColors.Background,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
@@ -169,7 +169,7 @@ fun ProjectRow(project: RecentProject, onClick: () -> Unit) {
             modifier = Modifier.weight(1f),
             fontSize = 13.sp,
             textAlign = TextAlign.End,
-            color = TrajectoryColors.TextSecondary
+            color = TrajectoryColors.Background
         )
     }
 }
