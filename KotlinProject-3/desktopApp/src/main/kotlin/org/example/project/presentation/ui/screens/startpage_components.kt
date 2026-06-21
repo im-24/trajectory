@@ -153,7 +153,8 @@ fun ProjectRow(project: RecentProject, onClick: () -> Unit) {
             .padding(horizontal = 32.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(project.name, modifier = Modifier.weight(2f), fontSize = 13.sp)
+        Text(project.name,            color = TrajectoryColors.TextSecondary,
+            modifier = Modifier.weight(2f), fontSize = 13.sp)
         Text(project.lastOpened, modifier = Modifier.weight(2f), fontSize = 13.sp, color = TrajectoryColors.TextSecondary)
         Text(
             project.path,
